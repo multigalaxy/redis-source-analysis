@@ -1,6 +1,5 @@
-*.gcda
-*.gcno
-*.gcov
-redis.info
-lcov-html
-.idea
+#*.gcda
+#*.gcno
+#*.gcov
+#redis.info
+#lcov-html
