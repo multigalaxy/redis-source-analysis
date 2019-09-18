@@ -49,7 +49,7 @@ typedef char *sds;
 // __attribute__ 用来在函数或数据声明中设置属性，后面跟以((attribute-list))的形式。这里((packed))表示编译器不要按自己对齐优化，按实际存放字节数对齐
 
 struct __attribute__ ((__packed__)) sdshdr5 {
-    unsigned char flags; /* 3 lsb of type, and 5 msb of string length */
+    unsigned char flags; /* 3 lsb of type, and 5 msb of string length */  // 最低三位是类型，高5位带边长度
     char buf[];
 };
 struct __attribute__ ((__packed__)) sdshdr8 {
@@ -101,9 +101,8 @@ struct __attribute__ ((__packed__)) sdshdr64 {
  * 3）*sh = (s) - (sizeof(struct sdshdr##T)，表示结构体的头部开始
  */
 
->>>>>>> 505ad17143210f0301e27185bedf26e8d4f552ce
 #define SDS_HDR(T,s) ((struct sdshdr##T *)((s)-(sizeof(struct sdshdr##T))))
-#define SDS_TYPE_5_LEN(f) ((f)>>SDS_TYPE_BITS)
+#define SDS_TYPE_5_LEN(f) ((f)>>SDS_TYPE_BITS)  // flags向右移3位变是type5的长度
 
 static inline size_t sdslen(const sds s) {
     unsigned char flags = s[-1];
@@ -148,6 +147,7 @@ static inline size_t sdsavail(const sds s) {
     return 0;
 }
 
+// 设置sds实际使用长度
 static inline void sdssetlen(sds s, size_t newlen) {
     unsigned char flags = s[-1];
     switch(flags&SDS_TYPE_MASK) {
