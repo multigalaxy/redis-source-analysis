@@ -54,6 +54,7 @@ static inline int sdsHdrSize(char type) {
     return 0;
 }
 
+// 按取各种类型的值范围求出指定长度所在的数据类型
 static inline char sdsReqType(size_t string_size) {
     if (string_size < 1<<5)
         return SDS_TYPE_5;
@@ -63,7 +64,7 @@ static inline char sdsReqType(size_t string_size) {
         return SDS_TYPE_16;
     if (string_size < 1ll<<32)
         return SDS_TYPE_32;
-    return SDS_TYPE_64;
+    return SDS_TYPE_64;  // 如果是32位系统咋办？？？
 }
 
 /* Create a new sds string with the content specified by the 'init' pointer
@@ -94,10 +95,10 @@ sds sdsnewlen(const void *init, size_t initlen) {
         memset(sh, 0, hdrlen+initlen+1);
     if (sh == NULL) return NULL;
     s = (char*)sh+hdrlen;  // 指向了buf开始的地方，参见sds.h的内存结构妙图
-    fp = ((unsigned char*)s)-1;  // flags在-1即倒数第一个字节的位置
+    fp = ((unsigned char*)s)-1;  // flags = s - 1 = 上一个内存地址
     switch(type) {
         case SDS_TYPE_5: {
-            *fp = type | (initlen << SDS_TYPE_BITS);
+            *fp = type | (initlen << SDS_TYPE_BITS);  // 真实长度是高[00000 - 11111]表示的，往左移的3位用来表示type类型，此处type=0，所以此8位=initlen + 000
             break;
         }
         case SDS_TYPE_8: {

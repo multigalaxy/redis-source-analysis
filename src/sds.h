@@ -29,7 +29,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
+/**
+ * sds相比c原生字符串的优势
+ * 1）、长度可控，不用字节对齐，节省空间；取长度复杂度降低O(1)；可通过alloc预分配空间(参考sdsMakeRoomFor函数)，减少内存分配，而且不会内存溢出，默认是1024 * 1024=1M。
+ * 2）、兼容c字符串的'\0'结尾标识，可以存储文本或任意二进制的数据，直接使用len决定了字符串大小而非拿'\0'判断结束；兼容c字符串库<string.h>的部分函数，如strcasecmp、printf等
+ */
 #ifndef __SDS_H
 #define __SDS_H
 
@@ -78,6 +82,7 @@ struct __attribute__ ((__packed__)) sdshdr64 {
 };
 
 // 定义数据类型，在创建sdsnewlen新的字符串、改变长度等操作时都会重新计算数据类型，以便重新分配合适大小的内存，也避免内存溢出。
+// 5，8，16，32，64代表此类型所能支持的最大长度；0 - 2^5-1，2^5 - 2^8-1等
 #define SDS_TYPE_5  0  // 5位二进制的数据类型，不用来按此值分配，只做比较用
 #define SDS_TYPE_8  1  // 8位即1字节的，极小整数
 #define SDS_TYPE_16 2  // 16位=2字节的，小整数
