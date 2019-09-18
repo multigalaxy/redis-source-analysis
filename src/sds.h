@@ -33,25 +33,30 @@
 #ifndef __SDS_H
 #define __SDS_H
 
+// sds字符串默认预分配大小是1M
 #define SDS_MAX_PREALLOC (1024*1024)
 
 #include <sys/types.h>
 #include <stdarg.h>
 #include <stdint.h>
 
+// 字符串别名，指向sdshdr的buf
 typedef char *sds;
 
 /* Note: sdshdr5 is never used, we just access the flags byte directly.
  * However is here to document the layout of type 5 SDS strings. */
+// 下面是保存字符串对象的结构
+// __attribute__ 用来在函数或数据声明中设置属性，后面跟以((attribute-list))的形式。这里((packed))表示编译器不要按自己对齐优化，按实际存放字节数对齐
+
 struct __attribute__ ((__packed__)) sdshdr5 {
     unsigned char flags; /* 3 lsb of type, and 5 msb of string length */
     char buf[];
 };
 struct __attribute__ ((__packed__)) sdshdr8 {
-    uint8_t len; /* used */
-    uint8_t alloc; /* excluding the header and null terminator */
+    uint8_t len; /* used */  // 实际使用字节数，等于字符串长度
+    uint8_t alloc; /* excluding the header and null terminator */  // 分配的总空间字节大小
     unsigned char flags; /* 3 lsb of type, 5 unused bits */
-    char buf[];
+    char buf[];  // 字节数组，保存字符串
 };
 struct __attribute__ ((__packed__)) sdshdr16 {
     uint16_t len; /* used */
@@ -72,14 +77,31 @@ struct __attribute__ ((__packed__)) sdshdr64 {
     char buf[];
 };
 
-#define SDS_TYPE_5  0
-#define SDS_TYPE_8  1
-#define SDS_TYPE_16 2
-#define SDS_TYPE_32 3
-#define SDS_TYPE_64 4
-#define SDS_TYPE_MASK 7  // 00000111
-#define SDS_TYPE_BITS 3
-#define SDS_HDR_VAR(T,s) struct sdshdr##T *sh = (void*)((s)-(sizeof(struct sdshdr##T)));
+// 定义数据类型，在创建sdsnewlen新的字符串、改变长度等操作时都会重新计算数据类型，以便重新分配合适大小的内存，也避免内存溢出。
+#define SDS_TYPE_5  0  // 5位二进制的数据类型，不用来按此值分配，只做比较用
+#define SDS_TYPE_8  1  // 8位即1字节的，极小整数
+#define SDS_TYPE_16 2  // 16位=2字节的，小整数
+#define SDS_TYPE_32 3  // 32位=4字节的，正常整数
+#define SDS_TYPE_64 4  // 64位=8字节的，大整数
+#define SDS_TYPE_MASK 7  // 掩码=00000111，用来与各个类型的flag做'与操作'求出对应的type值
+#define SDS_TYPE_BITS 3  // flags的最低3位有效位区分类型
+#define SDS_HDR_VAR(T,s) struct sdshdr##T *sh = (void*)((s)-(sizeof(struct sdshdr##T)));  // 宏定义，sh指向该数据结构体的头部，如下图：
+/**
+ * 内存结构：
+ * -------------------------
+ * | struct sdshdr##T      |
+ * |------------------------
+ * | len | alloc | buf     |
+ * |------------------------
+ * ↓             ↓
+ * *sh          sds
+ *
+ * 1）buf是可变数组，无大小
+ * 2）sizeof(struct sdshdr##T) == len + alloc
+ * 3）*sh = (s) - (sizeof(struct sdshdr##T)，表示结构体的头部开始
+ */
+
+>>>>>>> 505ad17143210f0301e27185bedf26e8d4f552ce
 #define SDS_HDR(T,s) ((struct sdshdr##T *)((s)-(sizeof(struct sdshdr##T))))
 #define SDS_TYPE_5_LEN(f) ((f)>>SDS_TYPE_BITS)
 

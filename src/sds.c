@@ -80,22 +80,23 @@ static inline char sdsReqType(size_t string_size) {
  * You can print the string with printf() as there is an implicit \0 at the
  * end of the string. However the string is binary safe and can contain
  * \0 characters in the middle, as the length is stored in the sds header. */
+// 使用指定的初始值和初始值长度创建一个sds字符串，如mystring = sdsnewlen("abc",3);
 sds sdsnewlen(const void *init, size_t initlen) {
     void *sh;
     sds s;
-    char type = sdsReqType(initlen);
+    char type = sdsReqType(initlen);  // 计算数据类型
     /* Empty strings are usually created in order to append. Use type 8
      * since type 5 is not good at this. */
-    if (type == SDS_TYPE_5 && initlen == 0) type = SDS_TYPE_8;
-    int hdrlen = sdsHdrSize(type);
-    unsigned char *fp; /* flags pointer. */
+    if (type == SDS_TYPE_5 && initlen == 0) type = SDS_TYPE_8;  // 5位转成8位存储
+    int hdrlen = sdsHdrSize(type);  // 求得结构体大小
+    unsigned char *fp; /* flags pointer. */  // 标记位，占一个字节，只使用低3位
 
-    sh = s_malloc(hdrlen+initlen+1);
+    sh = s_malloc(hdrlen+initlen+1);  // 兼容c字符串类型，多分配一个\0结尾符，可以直接用printf等函数输出sds
     if (!init)
         memset(sh, 0, hdrlen+initlen+1);
     if (sh == NULL) return NULL;
-    s = (char*)sh+hdrlen;
-    fp = ((unsigned char*)s)-1;
+    s = (char*)sh+hdrlen;  // 指向了buf开始的地方，参见sds.h的内存结构妙图
+    fp = ((unsigned char*)s)-1;  // flags在-1即倒数第一个字节的位置
     switch(type) {
         case SDS_TYPE_5: {
             *fp = type | (initlen << SDS_TYPE_BITS);
@@ -138,6 +139,7 @@ sds sdsnewlen(const void *init, size_t initlen) {
 
 /* Create an empty (zero length) sds string. Even in this case the string
  * always has an implicit null term. */
+// 创建一个长度为0的空的sds字符串，以空结尾（c字符串是以\0结尾）
 sds sdsempty(void) {
     return sdsnewlen("",0);
 }
@@ -395,6 +397,7 @@ sds sdscatlen(sds s, const void *t, size_t len) {
  *
  * After the call, the passed sds string is no longer valid and all the
  * references must be substituted with the new pointer returned by the call. */
+// concatenate 连接字符串，t=target
 sds sdscat(sds s, const char *t) {
     return sdscatlen(s, t, strlen(t));
 }
@@ -1073,7 +1076,7 @@ sds sdsmapchars(sds s, const char *from, const char *to, size_t setlen) {
 /* Join an array of C strings using the specified separator (also a C string).
  * Returns the result as an sds string. */
 sds sdsjoin(char **argv, int argc, char *sep) {
-    sds join = sdsempty();
+    sds join = sdsempty();  // 先构造一个空sds字符串
     int j;
 
     for (j = 0; j < argc; j++) {
