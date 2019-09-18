@@ -38,17 +38,19 @@
 #include "sds.h"
 #include "sdsalloc.h"
 
+// 按结构类型求得sds字符串结构体的字节大小
+// sizeof返回数据结构总的字节数，比如int arr[100] = {0}，只赋值20个，那么sizeof(arr) = 400。取总长度 = sizeof(arr) / sizeof(int)
 static inline int sdsHdrSize(char type) {
-    switch(type&SDS_TYPE_MASK) {
-        case SDS_TYPE_5:
+    switch(type&SDS_TYPE_MASK) {  // type & 00000111
+        case SDS_TYPE_5:  // 0, type = 0
             return sizeof(struct sdshdr5);
-        case SDS_TYPE_8:
+        case SDS_TYPE_8:  // 1, type = 1
             return sizeof(struct sdshdr8);
-        case SDS_TYPE_16:
+        case SDS_TYPE_16:  // 2, type = 2 = 00000010
             return sizeof(struct sdshdr16);
-        case SDS_TYPE_32:
+        case SDS_TYPE_32:  // 3, type = 3 = 00000011
             return sizeof(struct sdshdr32);
-        case SDS_TYPE_64:
+        case SDS_TYPE_64:  // 4, type = 4 = 00000100
             return sizeof(struct sdshdr64);
     }
     return 0;

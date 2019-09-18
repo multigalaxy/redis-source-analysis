@@ -10,11 +10,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="48300049-d5c2-41cf-97f9-a16b1e4cdf28" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/CMakeOutput.log" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deps/hiredis/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/deps/hiredis/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deps/jemalloc/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/deps/jemalloc/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deps/linenoise/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/deps/linenoise/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/sds.c" beforeDir="false" afterPath="$PROJECT_DIR$/src/sds.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/sds.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/sds.h" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -65,6 +63,7 @@
       <option name="presentableId" value="Default" />
       <updated>1568124498945</updated>
       <workItem from="1568124504876" duration="5889000" />
+      <workItem from="1568250553264" duration="870000" />
     </task>
     <servers />
   </component>
@@ -76,7 +75,9 @@
       <map>
         <entry key="MAIN">
           <value>
-            <State />
+            <State>
+              <option name="COLUMN_ORDER" />
+            </State>
           </value>
         </entry>
       </map>
