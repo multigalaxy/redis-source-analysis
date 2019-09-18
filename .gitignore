@@ -27,4 +27,4 @@
 #.make-*
 #.prerequisites
 #*.dSYM
-.idea
+/.idea
