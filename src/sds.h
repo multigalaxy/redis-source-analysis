@@ -267,20 +267,20 @@ sds sdscatsds(sds s, const sds t);  // 连接两个sds串，内部调用sdscatle
 sds sdscpylen(sds s, const char *t, size_t len);  // 将字符串t按指定长度赋值给s
 sds sdscpy(sds s, const char *t);  // 字符串赋值给s，调用sdscpylen，len=strlen(t)
 
-sds sdscatvprintf(sds s, const char *fmt, va_list ap);
+sds sdscatvprintf(sds s, const char *fmt, va_list ap);  // 格式化字符串，使用列表替换传入多个参数的方式来格式化指定的字符串
 #ifdef __GNUC__
 sds sdscatprintf(sds s, const char *fmt, ...)
     __attribute__((format(printf, 2, 3)));
 #else
-sds sdscatprintf(sds s, const char *fmt, ...);
+sds sdscatprintf(sds s, const char *fmt, ...);  // 格式化字符串，...代表可传入多个参数，其参数个数与fmt中格式符个数相同，内部调用sdscatvprintf
 #endif
 
-sds sdscatfmt(sds s, char const *fmt, ...);
-sds sdstrim(sds s, const char *cset);
-void sdsrange(sds s, int start, int end);
-void sdsupdatelen(sds s);
-void sdsclear(sds s);
-int sdscmp(const sds s1, const sds s2);
+sds sdscatfmt(sds s, char const *fmt, ...);  // 格式化字符串，用while方式逐一匹配实现，拜托了对libc中较慢的sprintf的依赖。
+sds sdstrim(sds s, const char *cset);  // 移除指定sds两边从cset指定的所有字符
+void sdsrange(sds s, int start, int end);  // 去除s指定范围的子串部分，即将start到end部分的子串重新拷贝给s所指的内存区域，改变原来的值
+void sdsupdatelen(sds s);  // 重新计算s->len的值。（在可能修改过s的值之后）更新sds串的实际长度为strlen（如果有多个\0，将取到第一个出现的位置结束）获取到的长度
+void sdsclear(sds s);  // 清空s串，长度为0，是个空串
+int sdscmp(const sds s1, const sds s2);  // 比较两串s1和s2的字节大小
 sds *sdssplitlen(const char *s, int len, const char *sep, int seplen, int *count);
 void sdsfreesplitres(sds *tokens, int count);
 void sdstolower(sds s);

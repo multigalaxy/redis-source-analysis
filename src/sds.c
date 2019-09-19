@@ -180,14 +180,14 @@ void sdsfree(sds s) {
  * the output will be "6" as the string was modified but the logical length
  * remains 6 bytes. */
 /**
- * 更新sds串的实际长度为strlen获取到的长度
+ * （在可能修改过s的值之后）更新sds串的实际长度为strlen（如果有多个\0，将取到第一个出现的位置结束）获取到的长度
  * 例如
  * s = sdsnew("foobar");
  * s[2] = '\0';
  * printf("%d\n", sdslen(s));
  * sdsupdatelen(s);
  * printf("%d\n", sdslen(s));
- * 第一个输出是2，因为到\0终止了；第二个是6，因为sds串里，不考虑\0长度，逻辑长度仍然是6
+ * 第一个输出是6，因为sds的len没变化；第二个是2，因为调用sdsupdatelen之后重新strlen取值并赋值给sds->len了
  */
 void sdsupdatelen(sds s) {
     int reallen = strlen(s);
@@ -198,7 +198,7 @@ void sdsupdatelen(sds s) {
  * However all the existing buffer is not discarded but set as free space
  * so that next append operations will not require allocations up to the
  * number of bytes previously available. */
-// 修改sds串的实际长度为0，开始值为\0，即开始就结束，是个空串
+// 修改sds串的实际长度为0，开始值为\0，即开始就结束，是个空串，结果等同于sdsempty()
 void sdsclear(sds s) {
     sdssetlen(s, 0);
     s[0] = '\0';
@@ -579,6 +579,7 @@ sds sdscatvprintf(sds s, const char *fmt, va_list ap) {
  *
  * s = sdscatprintf(sdsempty(), "... your format ...", args);
  */
+// 格式化字符串，...代表可传入多个参数，其参数个数与fmt中格式符个数相同
 sds sdscatprintf(sds s, const char *fmt, ...) {
     va_list ap;
     char *t;
@@ -604,6 +605,7 @@ sds sdscatprintf(sds s, const char *fmt, ...) {
  * %U - 64 bit unsigned integer (unsigned long long, uint64_t)
  * %% - Verbatim "%" character.
  */
+// 传入多个参数来格式化字符串，用while方式逐一匹配实现，拜托了对libc中较慢的sprintf的依赖。
 sds sdscatfmt(sds s, char const *fmt, ...) {
     size_t initlen = sdslen(s);
     const char *f = fmt;
@@ -708,18 +710,19 @@ sds sdscatfmt(sds s, char const *fmt, ...) {
  *
  * Output will be just "Hello World".
  */
+// 移除指定sds两边从cset指定的所有字符
 sds sdstrim(sds s, const char *cset) {
-    char *start, *end, *sp, *ep;
+    char *start, *end, *sp, *ep;  // 声明开始指针和结束指针
     size_t len;
 
     sp = start = s;
     ep = end = s+sdslen(s)-1;
-    while(sp <= end && strchr(cset, *sp)) sp++;
-    while(ep > sp && strchr(cset, *ep)) ep--;
-    len = (sp > ep) ? 0 : ((ep-sp)+1);
-    if (s != sp) memmove(s, sp, len);
-    s[len] = '\0';
-    sdssetlen(s,len);
+    while(sp <= end && strchr(cset, *sp)) sp++;  // 从左边往右依次找到第一个不在cset列表里的字符，开始指针累加1
+    while(ep > sp && strchr(cset, *ep)) ep--;  // 从右边往左依次找到第一个不在cset列表里的字符，结束指针累减1
+    len = (sp > ep) ? 0 : ((ep-sp)+1);  // 最后真实子串的长度
+    if (s != sp) memmove(s, sp, len);  // 如果sp!=s表示左面有匹配的字符，需要拷贝sp开始len个自己到s所指内存区域
+    s[len] = '\0';  // 子串末尾结束符
+    sdssetlen(s,len);  // 重新设置sds真实长度，不改变alloc
     return s;
 }
 
@@ -739,6 +742,7 @@ sds sdstrim(sds s, const char *cset) {
  * s = sdsnew("Hello World");
  * sdsrange(s,1,-1); => "ello World"
  */
+// 去除s指定范围的子串部分，即将start到end部分的子串重新拷贝给s所指的内存区域，改变原来的值
 void sdsrange(sds s, int start, int end) {
     size_t newlen, len = sdslen(s);
 
@@ -792,6 +796,7 @@ void sdstoupper(sds s) {
  * If two strings share exactly the same prefix, but one of the two has
  * additional characters, the longer string is considered to be greater than
  * the smaller one. */
+// 按字节比较大小
 int sdscmp(const sds s1, const sds s2) {
     size_t l1, l2, minlen;
     int cmp;
@@ -799,9 +804,9 @@ int sdscmp(const sds s1, const sds s2) {
     l1 = sdslen(s1);
     l2 = sdslen(s2);
     minlen = (l1 < l2) ? l1 : l2;
-    cmp = memcmp(s1,s2,minlen);
-    if (cmp == 0) return l1-l2;
-    return cmp;
+    cmp = memcmp(s1,s2,minlen);  // 只比较两指针所指内存区域的前n个字节的区域的ascii值
+    if (cmp == 0) return l1-l2;  // 最小串相同，此时如果l1-l2为0，表示两串完全相同，如果为正，表示s1更长，否则就是s2更长
+    return cmp;  // 为正就是s1的ascii大，否则s2的大
 }
 
 /* Split 's' with separator in 'sep'. An array
