@@ -133,7 +133,7 @@ sds sdsnewlen(const void *init, size_t initlen) {
         }
     }
     if (initlen && init)
-        memcpy(s, init, initlen);
+        memcpy(s, init, initlen);  // 初始值赋值给s，等价于sds *s=init
     s[initlen] = '\0';
     return s;
 }
@@ -146,17 +146,20 @@ sds sdsempty(void) {
 }
 
 /* Create a new sds string starting from a null terminated C string. */
+// 创建新的字符串
 sds sdsnew(const char *init) {
     size_t initlen = (init == NULL) ? 0 : strlen(init);
     return sdsnewlen(init, initlen);
 }
 
 /* Duplicate an sds string. */
+// 使用指定sds串复制一份新的出来
 sds sdsdup(const sds s) {
-    return sdsnewlen(s, sdslen(s));
+    return sdsnewlen(s, sdslen(s));  // 返回构造的新串（指针）
 }
 
 /* Free an sds string. No operation is performed if 's' is NULL. */
+// 释放一个sds串，空串不做任何操作
 void sdsfree(sds s) {
     if (s == NULL) return;
     s_free((char*)s-sdsHdrSize(s[-1]));
@@ -176,6 +179,16 @@ void sdsfree(sds s) {
  * The output will be "2", but if we comment out the call to sdsupdatelen()
  * the output will be "6" as the string was modified but the logical length
  * remains 6 bytes. */
+/**
+ * 更新sds串的实际长度为strlen获取到的长度
+ * 例如
+ * s = sdsnew("foobar");
+ * s[2] = '\0';
+ * printf("%d\n", sdslen(s));
+ * sdsupdatelen(s);
+ * printf("%d\n", sdslen(s));
+ * 第一个输出是2，因为到\0终止了；第二个是6，因为sds串里，不考虑\0长度，逻辑长度仍然是6
+ */
 void sdsupdatelen(sds s) {
     int reallen = strlen(s);
     sdssetlen(s, reallen);
@@ -185,6 +198,7 @@ void sdsupdatelen(sds s) {
  * However all the existing buffer is not discarded but set as free space
  * so that next append operations will not require allocations up to the
  * number of bytes previously available. */
+// 修改sds串的实际长度为0，开始值为\0，即开始就结束，是个空串
 void sdsclear(sds s) {
     sdssetlen(s, 0);
     s[0] = '\0';
@@ -206,6 +220,7 @@ sds sdsMakeRoomFor(sds s, size_t addlen) {
     int hdrlen;
 
     /* Return ASAP if there is enough space left. */
+    // 如果可用要长度还足够，直接返回串
     if (avail >= addlen) return s;
 
     len = sdslen(s);
@@ -239,7 +254,7 @@ sds sdsMakeRoomFor(sds s, size_t addlen) {
         memcpy((char*)newsh+hdrlen, s, len+1);  //  内存拷贝值
         s_free(sh);  // 释放旧内存
         s = (char*)newsh+hdrlen;
-        s[-1] = type;  // 新的大小类型放最后一位
+        s[-1] = type;  // 这儿就是flag标记位
         sdssetlen(s, len);  // 重设大小
     }
     sdssetalloc(s, newlen);
@@ -365,16 +380,18 @@ void sdsIncrLen(sds s, int incr) {
  *
  * if the specified length is smaller than the current length, no operation
  * is performed. */
+// 使用\0填充将sds长度增加到指定长度len，否则不用填充直接返回s，alloc也增加len-curlen
 sds sdsgrowzero(sds s, size_t len) {
     size_t curlen = sdslen(s);
 
     if (len <= curlen) return s;
-    s = sdsMakeRoomFor(s,len-curlen);
+    s = sdsMakeRoomFor(s,len-curlen);  // 增加alloc的值
     if (s == NULL) return NULL;
 
     /* Make sure added region doesn't contain garbage */
+    // 将新增的内存块重设为0
     memset(s+curlen,0,(len-curlen+1)); /* also set trailing \0 byte */
-    sdssetlen(s, len);
+    sdssetlen(s, len);  // 设置sds实际长度为len
     return s;
 }
 

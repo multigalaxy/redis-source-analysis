@@ -109,6 +109,13 @@ struct __attribute__ ((__packed__)) sdshdr64 {
 #define SDS_HDR(T,s) ((struct sdshdr##T *)((s)-(sizeof(struct sdshdr##T))))
 #define SDS_TYPE_5_LEN(f) ((f)>>SDS_TYPE_BITS)  // flags向右移3位变是type5的长度
 
+/**
+ * 下面这些函数，调用频繁，因此直接内联设置，不用函数进出栈
+ * 静态函数只能在本文件被调用。
+ * 下面提供的非static函数，默认是extern属性，即所有文件可见的，可以调用本文件定义的static函数
+ */
+
+// 内联：获取sds实际长度
 static inline size_t sdslen(const sds s) {
     unsigned char flags = s[-1];
     switch(flags&SDS_TYPE_MASK) {
@@ -126,6 +133,7 @@ static inline size_t sdslen(const sds s) {
     return 0;
 }
 
+// 内联：获取sds剩下的可用空间，alloc - len
 static inline size_t sdsavail(const sds s) {
     unsigned char flags = s[-1];
     switch(flags&SDS_TYPE_MASK) {
@@ -152,7 +160,7 @@ static inline size_t sdsavail(const sds s) {
     return 0;
 }
 
-// 设置sds实际使用长度
+// 内联：设置sds实际使用长度
 static inline void sdssetlen(sds s, size_t newlen) {
     unsigned char flags = s[-1];
     switch(flags&SDS_TYPE_MASK) {
@@ -177,6 +185,7 @@ static inline void sdssetlen(sds s, size_t newlen) {
     }
 }
 
+// 内联：给sds增加指定的len长度
 static inline void sdsinclen(sds s, size_t inc) {
     unsigned char flags = s[-1];
     switch(flags&SDS_TYPE_MASK) {
@@ -203,6 +212,7 @@ static inline void sdsinclen(sds s, size_t inc) {
 }
 
 /* sdsalloc() = sdsavail() + sdslen() */
+// 内联：获取sds可用的总空间大小
 static inline size_t sdsalloc(const sds s) {
     unsigned char flags = s[-1];
     switch(flags&SDS_TYPE_MASK) {
@@ -220,6 +230,7 @@ static inline size_t sdsalloc(const sds s) {
     return 0;
 }
 
+// 内联：设置分配的总空间为指定长度
 static inline void sdssetalloc(sds s, size_t newlen) {
     unsigned char flags = s[-1];
     switch(flags&SDS_TYPE_MASK) {
@@ -241,17 +252,20 @@ static inline void sdssetalloc(sds s, size_t newlen) {
     }
 }
 
-sds sdsnewlen(const void *init, size_t initlen);
-sds sdsnew(const char *init);
-sds sdsempty(void);
-sds sdsdup(const sds s);
-void sdsfree(sds s);
-sds sdsgrowzero(sds s, size_t len);
-sds sdscatlen(sds s, const void *t, size_t len);
-sds sdscat(sds s, const char *t);
-sds sdscatsds(sds s, const sds t);
-sds sdscpylen(sds s, const char *t, size_t len);
-sds sdscpy(sds s, const char *t);
+/**
+ * 提供如下api
+ **/
+sds sdsnewlen(const void *init, size_t initlen);  // 生成s，按任意指定数据
+sds sdsnew(const char *init);  // 生成s，指定字符串
+sds sdsempty(void);  // 置为空串，len=0
+sds sdsdup(const sds s);  // 新复制一份s并返回新的结构体
+void sdsfree(sds s);  // 释放
+sds sdsgrowzero(sds s, size_t len);  // 实际长度增加到指定长度，alloc长度也要增加len-curlen的量
+sds sdscatlen(sds s, const void *t, size_t len);  // 连接两个串，任意串*t按指定的len连接到s
+sds sdscat(sds s, const char *t);  // 连接两个串，必须是字符串，内部调用的sdscatlen，len=strlen(t)
+sds sdscatsds(sds s, const sds t);  // 连接两个sds串，内部调用sdscatlen，len=strlen(t)
+sds sdscpylen(sds s, const char *t, size_t len);  // 将字符串t按指定长度赋值给s
+sds sdscpy(sds s, const char *t);  // 字符串赋值给s，调用sdscpylen，len=strlen(t)
 
 sds sdscatvprintf(sds s, const char *fmt, va_list ap);
 #ifdef __GNUC__
