@@ -285,8 +285,8 @@ sds *sdssplitlen(const char *s, int len, const char *sep, int seplen, int *count
 void sdsfreesplitres(sds *tokens, int count);  // 释放由sdssplitlen分割出来的tokens数组
 void sdstolower(sds s);  // s串转成小写
 void sdstoupper(sds s);  // s串转成大写
-sds sdsfromlonglong(long long value);  // 8字节=64位，从longlong整形数据转成sds串存储，
-sds sdscatrepr(sds s, const char *p, size_t len); //
+sds sdsfromlonglong(long long value);  // 8字节=64位，从longlong整形数据转成sds串存储，替代sdscatprintf(sdsempty(),"%lld\n", value);
+sds sdscatrepr(sds s, const char *p, size_t len); // 把sds串与给定的字符表达式聚合到一起，用字符表达式替换sds对应位置的字符
 sds *sdssplitargs(const char *line, int *argc);
 sds sdsmapchars(sds s, const char *from, const char *to, size_t setlen);
 sds sdsjoin(char **argv, int argc, char *sep);
