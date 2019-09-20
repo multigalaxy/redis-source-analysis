@@ -262,9 +262,9 @@ sds sdsdup(const sds s);  // 新复制一份s并返回新的结构体
 void sdsfree(sds s);  // 释放
 sds sdsgrowzero(sds s, size_t len);  // 实际长度增加到指定长度，alloc长度也要增加len-curlen的量
 sds sdscatlen(sds s, const void *t, size_t len);  // 连接两个串，任意串*t按指定的len连接到s
-sds sdscat(sds s, const char *t);  // 连接两个串，必须是字符串，内部调用的sdscatlen，len=strlen(t)
+sds sdscat(sds s, const char *t);  // 连接两个串，必须是c字符串，内部调用的sdscatlen，len=strlen(t)
 sds sdscatsds(sds s, const sds t);  // 连接两个sds串，内部调用sdscatlen，len=strlen(t)
-sds sdscpylen(sds s, const char *t, size_t len);  // 将字符串t按指定长度赋值给s
+sds sdscpylen(sds s, const char *t, size_t len);  // 将c字符串t按指定字节长度赋值给s的内存区域
 sds sdscpy(sds s, const char *t);  // 字符串赋值给s，调用sdscpylen，len=strlen(t)
 
 sds sdscatvprintf(sds s, const char *fmt, va_list ap);  // 格式化字符串，使用列表替换传入多个参数的方式来格式化指定的字符串
@@ -275,7 +275,7 @@ sds sdscatprintf(sds s, const char *fmt, ...)
 sds sdscatprintf(sds s, const char *fmt, ...);  // 格式化字符串，...代表可传入多个参数，其参数个数与fmt中格式符个数相同，内部调用sdscatvprintf
 #endif
 
-sds sdscatfmt(sds s, char const *fmt, ...);  // 格式化字符串，用while方式逐一匹配实现，拜托了对libc中较慢的sprintf的依赖。
+sds sdscatfmt(sds s, char const *fmt, ...);  // 格式化字符串，用while方式逐一匹配实现，拜托了对libc中较慢的sprintf的依赖。此处char const和const char等价，为啥不统一格式为const char？？？？
 sds sdstrim(sds s, const char *cset);  // 移除指定sds两边从cset指定的所有字符
 void sdsrange(sds s, int start, int end);  // 去除s指定范围的子串部分，即将start到end部分的子串重新拷贝给s所指的内存区域，改变原来的值
 void sdsupdatelen(sds s);  // 重新计算s->len的值。（在可能修改过s的值之后）更新sds串的实际长度为strlen（如果有多个\0，将取到第一个出现的位置结束）获取到的长度
