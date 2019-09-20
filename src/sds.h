@@ -281,12 +281,12 @@ void sdsrange(sds s, int start, int end);  // 去除s指定范围的子串部分
 void sdsupdatelen(sds s);  // 重新计算s->len的值。（在可能修改过s的值之后）更新sds串的实际长度为strlen（如果有多个\0，将取到第一个出现的位置结束）获取到的长度
 void sdsclear(sds s);  // 清空s串，长度为0，是个空串
 int sdscmp(const sds s1, const sds s2);  // 比较两串s1和s2的字节大小
-sds *sdssplitlen(const char *s, int len, const char *sep, int seplen, int *count);
-void sdsfreesplitres(sds *tokens, int count);
-void sdstolower(sds s);
-void sdstoupper(sds s);
-sds sdsfromlonglong(long long value);  // 8字节=64位
-sds sdscatrepr(sds s, const char *p, size_t len);
+sds *sdssplitlen(const char *s, int len, const char *sep, int seplen, int *count);  // 按sep分割s串并返回分割后的数组，count为数组个数
+void sdsfreesplitres(sds *tokens, int count);  // 释放由sdssplitlen分割出来的tokens数组
+void sdstolower(sds s);  // s串转成小写
+void sdstoupper(sds s);  // s串转成大写
+sds sdsfromlonglong(long long value);  // 8字节=64位，从longlong整形数据转成sds串存储，
+sds sdscatrepr(sds s, const char *p, size_t len); //
 sds *sdssplitargs(const char *line, int *argc);
 sds sdsmapchars(sds s, const char *from, const char *to, size_t setlen);
 sds sdsjoin(char **argv, int argc, char *sep);

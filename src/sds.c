@@ -453,34 +453,37 @@ sds sdscpy(sds s, const char *t) {
  *
  * The function returns the length of the null-terminated string
  * representation stored at 's'. */
-#define SDS_LLSTR_SIZE 21
+// ll整型转成字符串存储，并返回字符串长度。ll=10000 => "10000\0"，-3123 => "-3123\0"
+#define SDS_LLSTR_SIZE 21  // ll to str，s至少分配21个字节
 int sdsll2str(char *s, long long value) {
-    char *p, aux;
+    char *p, aux;  //
     unsigned long long v;
     size_t l;
 
-    /* Generate the string representation, this method produces
-     * an reversed string. */
+    /* 生成翻转的字符串表达式，比如1234 => "4321\0"
+     * Generate the string representation, this method produces
+     * an reversed string.
+     **/
     v = (value < 0) ? -value : value;
-    p = s;
+    p = s;  // 注1：此时s和p等于同一个地址
     do {
-        *p++ = '0'+(v%10);
+        *p++ = '0'+(v%10);  // 转成ascii计算后再转成字符，然后指针向后移动1个
         v /= 10;
     } while(v);
-    if (value < 0) *p++ = '-';
+    if (value < 0) *p++ = '-';  // 如果是负数，追加负号
 
-    /* Compute length and add null term. */
-    l = p-s;
+    /* 在加入结束符前计算长度 Compute length and add null term. */
+    l = p-s;  // 注2：此时p=最后一个翻转后的字符地址，s=开始地址，所以长度=p-s
     *p = '\0';
 
-    /* Reverse the string. */
+    /* 翻转字符串，p--跳过结束符 Reverse the string. */
     p--;
     while(s < p) {
         aux = *s;
         *s = *p;
         *p = aux;
         s++;
-        p--;
+        p--;  // 注3：最后p=开始地址
     }
     return l;
 }
@@ -875,6 +878,7 @@ cleanup:
 }
 
 /* Free the result returned by sdssplitlen(), or do nothing if 'tokens' is NULL. */
+// 释放由sdssplitlen分割出来的tokens数组
 void sdsfreesplitres(sds *tokens, int count) {
     if (!tokens) return;
     while(count--)
