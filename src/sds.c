@@ -38,7 +38,7 @@
 #include "sds.h"
 #include "sdsalloc.h"
 
-// 按结构类型求得sds字符串结构体的字节大小
+// sds字符串结构体的字节大小，即头部大小，全拼sdsheadersize
 // sizeof返回数据结构总的字节数，比如int arr[100] = {0}，只赋值20个，那么sizeof(arr) = 400。取总长度 = sizeof(arr) / sizeof(int)
 static inline int sdsHdrSize(char type) {
     switch(type&SDS_TYPE_MASK) {  // type & 00000111
@@ -277,7 +277,7 @@ sds sdsRemoveFreeSpace(sds s) {
     type = sdsReqType(len);
     hdrlen = sdsHdrSize(type);
     if (oldtype==type) {
-        newsh = s_realloc(sh, hdrlen+len+1);
+        newsh = s_realloc(sh, hdrlen+len+1);  // 内存只分配头部+实际长度+1个字节
         if (newsh == NULL) return NULL;
         s = (char*)newsh+hdrlen;
     } else {
@@ -298,17 +298,18 @@ sds sdsRemoveFreeSpace(sds s) {
  * 1) The sds header before the pointer.
  * 2) The string.
  * 3) The free buffer at the end if any.
- * 4) The implicit null term.
+ * 4) The implicit null term.  结束字符
+ * 返回所分配内存总大小
  */
 size_t sdsAllocSize(sds s) {
     size_t alloc = sdsalloc(s);
-    return sdsHdrSize(s[-1])+alloc+1;
+    return sdsHdrSize(s[-1])+alloc+1;  // alloc=strlen(s) + free两部分
 }
 
-/* Return the pointer of the actual SDS allocation (normally SDS strings
+/* 返回s的控制结构的起始地址 Return the pointer of the actual SDS allocation (normally SDS strings
  * are referenced by the start of the string buffer). */
 void *sdsAllocPtr(sds s) {
-    return (void*) (s-sdsHdrSize(s[-1]));
+    return (void*) (s-sdsHdrSize(s[-1]));  // s[-1]取向后移动一个指针的值，即flag
 }
 
 /* Increment the sds length and decrements the left free space at the
@@ -467,7 +468,7 @@ int sdsll2str(char *s, long long value) {
     v = (value < 0) ? -value : value;
     p = s;  // 注1：此时s和p等于同一个地址
     do {
-        *p++ = '0'+(v%10);  // 转成ascii计算后再转成字符，然后指针向后移动1个
+        *p++ = '0'+(v%10);  // 转成ascii计算后再转成字符赋值给*p，然后指针向后移动1个
         v /= 10;
     } while(v);
     if (value < 0) *p++ = '-';  // 如果是负数，追加负号
@@ -968,6 +969,8 @@ int hex_digit_to_int(char c) {
  * input string is empty, or NULL if the input contains unbalanced
  * quotes or closed quotes followed by non space characters
  * as in: "foo"bar or "foo'
+ *
+ * 解析命令行参数并返回sds数组，并写入参数个数到argc里
  */
 sds *sdssplitargs(const char *line, int *argc) {
     const char *p = line;
@@ -976,95 +979,104 @@ sds *sdssplitargs(const char *line, int *argc) {
 
     *argc = 0;
     while(1) {
-        /* skip blanks */
+        /** 一、跳过空格 skip blanks */
         while(*p && isspace(*p)) p++;
         if (*p) {
-            /* get a token */
-            int inq=0;  /* set to 1 if we are in "quotes" */
-            int insq=0; /* set to 1 if we are in 'single quotes' */
-            int done=0;
+            /** 二、开始匹配所有token数组 get a token */
+            int inq=0;  /* 在双引号里 set to 1 if we are in "quotes" */
+            int insq=0; /* 在单引号里 set to 1 if we are in 'single quotes' */
+            int done=0;  // 是否完成本次匹配
 
             if (current == NULL) current = sdsempty();
             while(!done) {
+                /** 继续本次匹配token */
                 if (inq) {
+                    /** 1、当前在双引号里 */
                     if (*p == '\\' && *(p+1) == 'x' &&
                                              is_hex_digit(*(p+2)) &&
                                              is_hex_digit(*(p+3)))
                     {
+                        /* 1.1 当前字符如果是转义字符，并且是16进制，取后3个字节，指针跳到后面3个字节后 */
                         unsigned char byte;
 
                         byte = (hex_digit_to_int(*(p+2))*16)+
                                 hex_digit_to_int(*(p+3));
-                        current = sdscatlen(current,(char*)&byte,1);
+                        current = sdscatlen(current,(char*)&byte,1);  // 16进制字符追加到current后面
                         p += 3;
                     } else if (*p == '\\' && *(p+1)) {
+                        /* 1.2 其他转义字符 */
                         char c;
 
                         p++;
                         switch(*p) {
-                        case 'n': c = '\n'; break;
-                        case 'r': c = '\r'; break;
-                        case 't': c = '\t'; break;
-                        case 'b': c = '\b'; break;
-                        case 'a': c = '\a'; break;
+                        case 'n': c = '\n'; break;  // 换行符
+                        case 'r': c = '\r'; break;  // 回车
+                        case 't': c = '\t'; break;  // 制表符
+                        case 'b': c = '\b'; break;  // 退格键
+                        case 'a': c = '\a'; break;  // 响铃符
                         default: c = *p; break;
                         }
-                        current = sdscatlen(current,&c,1);
+                        current = sdscatlen(current,&c,1);  // 转义字符追加到current后面
                     } else if (*p == '"') {
-                        /* closing quote must be followed by a space or
-                         * nothing at all. */
+                        /* 1.3 当前字符是双引号，即右双引号，后面必须是空格，否则报错 closing quote must be followed by a space or nothing at all. */
                         if (*(p+1) && !isspace(*(p+1))) goto err;
-                        done=1;
+                        done=1;  // 如果双引号正常结束了，结束本次匹配
                     } else if (!*p) {
-                        /* unterminated quotes */
+                        /* 1.4 双引号未闭合就结束了，跳转到错误处理 unterminated quotes */
                         goto err;
                     } else {
+                        /* 1.5 其他字符直接连接到current字符串后面 */
                         current = sdscatlen(current,p,1);
                     }
                 } else if (insq) {
+                    /** 2、当前如果不在双引号里，而是在单引号里 */
                     if (*p == '\\' && *(p+1) == '\'') {
+                        /* 2.1 当前字符是单引号 */
                         p++;
-                        current = sdscatlen(current,"'",1);
+                        current = sdscatlen(current,"'",1);  // 单引号追加到当前字符后面
                     } else if (*p == '\'') {
-                        /* closing quote must be followed by a space or
-                         * nothing at all. */
+                        /* 2.2 当前字符是单引号，后面必须是空格，否则报错 closing quote must be followed by a space or nothing at all. */
                         if (*(p+1) && !isspace(*(p+1))) goto err;
-                        done=1;
+                        done=1;  // 本次匹配提前结束
                     } else if (!*p) {
-                        /* unterminated quotes */
+                        /* 2.3 单引号未闭合就结束了，跳转到错误处理 unterminated quotes */
                         goto err;
                     } else {
+                        /* 2.4 当前字符为其他任意字符 直接追加到已匹配到的字符后面去 */
                         current = sdscatlen(current,p,1);
                     }
                 } else {
+                    /** 3、当前既不在双引号，又不在单引号里 */
                     switch(*p) {
                     case ' ':
                     case '\n':
                     case '\r':
                     case '\t':
                     case '\0':
-                        done=1;
+                        done=1;  // 3.1 当前字符是空格、换行、回车、制表、字符串结束符都将完成本次匹配
                         break;
-                    case '"':
+                    case '"':  // 3.2 当前字符是双引号，作标识，需要有右双引号
                         inq=1;
                         break;
-                    case '\'':
+                    case '\'':  // 3.3 当前字符是单引号，作标识，需要有右单引号
                         insq=1;
                         break;
                     default:
-                        current = sdscatlen(current,p,1);
+                        current = sdscatlen(current,p,1);  // 3.4 其他字符追加即可
                         break;
                     }
                 }
+                /** 4、指针向下移动，进行下个字符判断 */
                 if (*p) p++;
             }
-            /* add the token to the vector */
+
+            /** 三、当前匹配到的字符串加到数组里，数组长度+1 add the token to the vector */
             vector = s_realloc(vector,((*argc)+1)*sizeof(char*));
             vector[*argc] = current;
             (*argc)++;
             current = NULL;
         } else {
-            /* Even on empty input string return something not NULL. */
+            /** 返回空串，而不是null Even on empty input string return something not NULL. */
             if (vector == NULL) vector = s_malloc(sizeof(void*));
             return vector;
         }
@@ -1087,7 +1099,9 @@ err:
  * will have the effect of turning the string "hello" into "0ell1".
  *
  * The function returns the sds string pointer, that is always the same
- * as the input pointer since no resize is needed. */
+ * as the input pointer since no resize is needed.
+ * 用to里每个字符，替换s里所有的由from指按顺序定的所有字符，如s="fHemo prut!", from="HH", to="01", 最终s="f1emo prut!"。因为H被最终匹配到的值计算
+ **/
 sds sdsmapchars(sds s, const char *from, const char *to, size_t setlen) {
     size_t j, i, l = sdslen(s);
 
