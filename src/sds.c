@@ -153,7 +153,7 @@ sds sdsnew(const char *init) {
 }
 
 /* Duplicate an sds string. */
-// 使用指定sds串复制一份新的出来
+// 构造一个新的结构，s作为初始值
 sds sdsdup(const sds s) {
     return sdsnewlen(s, sdslen(s));  // 返回构造的新串（指针）
 }
@@ -180,7 +180,7 @@ void sdsfree(sds s) {
  * the output will be "6" as the string was modified but the logical length
  * remains 6 bytes. */
 /**
- * （在可能修改过s的值之后）更新sds串的实际长度为strlen（如果有多个\0，将取到第一个出现的位置结束）获取到的长度
+ * 重新计算s->len的值。（在可能手动修改过s的值之后，如s[2]=''这样直接赋值操作），更新sds串的实际长度为strlen（如果有多个\0，将取到第一个出现的位置结束）获取到的长度
  * 例如
  * s = sdsnew("foobar");
  * s[2] = '\0';

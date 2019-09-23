@@ -258,7 +258,7 @@ static inline void sdssetalloc(sds s, size_t newlen) {
 sds sdsnewlen(const void *init, size_t initlen);  // 生成s，按任意指定数据
 sds sdsnew(const char *init);  // 生成s，指定字符串
 sds sdsempty(void);  // 置为空串，len=0
-sds sdsdup(const sds s);  // 新复制一份s并返回新的结构体
+sds sdsdup(const sds s);  // 构造一个新的字符串，s作为初始值
 void sdsfree(sds s);  // 释放
 sds sdsgrowzero(sds s, size_t len);  // 实际长度增加到指定长度，alloc长度也要增加len-curlen的量
 sds sdscatlen(sds s, const void *t, size_t len);  // 连接两个串，任意串*t按指定的len连接到s
