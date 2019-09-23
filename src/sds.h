@@ -253,7 +253,7 @@ static inline void sdssetalloc(sds s, size_t newlen) {
 }
 
 /**
- * 提供如下api
+ * 提供如下3类 第一类常用api
  **/
 sds sdsnewlen(const void *init, size_t initlen);  // 生成s，按任意指定数据
 sds sdsnew(const char *init);  // 生成s，指定字符串
@@ -287,25 +287,27 @@ void sdstolower(sds s);  // s串转成小写
 void sdstoupper(sds s);  // s串转成大写
 sds sdsfromlonglong(long long value);  // 8字节=64位，从longlong整形数据转成sds串存储，替代sdscatprintf(sdsempty(),"%lld\n", value);
 sds sdscatrepr(sds s, const char *p, size_t len); // 把sds串与给定的字符表达式聚合到一起，用字符表达式替换sds对应位置的字符
-sds *sdssplitargs(const char *line, int *argc);
-sds sdsmapchars(sds s, const char *from, const char *to, size_t setlen);
-sds sdsjoin(char **argv, int argc, char *sep);
-sds sdsjoinsds(sds *argv, int argc, const char *sep, size_t seplen);
+sds *sdssplitargs(const char *line, int *argc);  // 解析命令行参数并返回sds数组，并写入参数个数到argc里
+sds sdsmapchars(sds s, const char *from, const char *to, size_t setlen);  //  用to里每个字符，替换s里所有的由from指按顺序定的所有字符，如s="fHemo prut!", from="HH", to="01", 最终s="f1emo prut!"。因为H被最终匹配到的值计算
+sds sdsjoin(char **argv, int argc, char *sep);  // 把c字符串数组按指定的sep连接符连接起来
+sds sdsjoinsds(sds *argv, int argc, const char *sep, size_t seplen);  // 把sds字符串数组按指定的sep连接符连接起来
 
-/* Low level functions exposed to the user API */
-sds sdsMakeRoomFor(sds s, size_t addlen);
-void sdsIncrLen(sds s, int incr);
-sds sdsRemoveFreeSpace(sds s);
-size_t sdsAllocSize(sds s);
-void *sdsAllocPtr(sds s);
+/* 第二类 低级api函数 Low level functions exposed to the user API */
+sds sdsMakeRoomFor(sds s, size_t addlen);  // 为sds扩展alloc总内存空间
+void sdsIncrLen(sds s, int incr);  // 增加s的实际长度。s被其他函数调用后可能需要改变长度。
+sds sdsRemoveFreeSpace(sds s);  // 删除空闲空间，重新整理一个sds，alloc=len
+size_t sdsAllocSize(sds s);  // 分配的所有内存大小，包括结构体头部+ alloc（实际字符串+空闲部分）+1个结束符
+void *sdsAllocPtr(sds s);  // 返回s的控制结构的起始地址
 
 /* Export the allocator used by SDS to the program using SDS.
  * Sometimes the program SDS is linked to, may use a different set of
  * allocators, but may want to allocate or free things that SDS will
- * respectively free or allocate. */
-void *sds_malloc(size_t size);
-void *sds_realloc(void *ptr, size_t size);
-void sds_free(void *ptr);
+ * respectively free or allocate.
+ * 第三类 几个操作内存的函数
+ **/
+void *sds_malloc(size_t size);  // 申请给定大小的内存，返回申请好的指针（绑定到sds上）
+void *sds_realloc(void *ptr, size_t size);  // 给指定指针，重新分配内存，并返回新分配的内存指针
+void sds_free(void *ptr);  // 释放指定指针的内存，此指针一释放意味着变量内存找不着了，也就释放了变量的内存
 
 #ifdef REDIS_TEST
 int sdsTest(int argc, char *argv[]);
