@@ -27,12 +27,13 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
+// adlist是a doubly list的缩写，一个双端链表
 #ifndef __ADLIST_H__
 #define __ADLIST_H__
 
-/* Node, List, and Iterator are the only data structures used currently. */
-
+/* 结点、链表和迭代器的结构定义。
+ * Node, List, and Iterator are the only data structures used currently. */
+// 大小为3倍的value指针
 typedef struct listNode {
     struct listNode *prev;
     struct listNode *next;
@@ -41,53 +42,56 @@ typedef struct listNode {
 
 typedef struct listIter {
     listNode *next;
-    int direction;
+    int direction;  // 当前迭代的方向
 } listIter;
 
 typedef struct list {
     listNode *head;
     listNode *tail;
-    void *(*dup)(void *ptr);
-    void (*free)(void *ptr);
-    int (*match)(void *ptr, void *key);
+    void *(*dup)(void *ptr);  // 指定的复制函数
+    void (*free)(void *ptr);  // 指定的释放函数
+    int (*match)(void *ptr, void *key);  // 指定的与输入值和当前结点比较的函数
     unsigned long len;
 } list;
 
-/* Functions implemented as macros */
-#define listLength(l) ((l)->len)
-#define listFirst(l) ((l)->head)
-#define listLast(l) ((l)->tail)
+/* 用宏定义函数 Functions implemented as macros */
+// 查询链表和结点的结构体基本属性
+#define listLength(l) ((l)->len)  // 定义获取链表长度的宏，结果是指向了链表的len属性
+#define listFirst(l) ((l)->head)  // 链表头结点
+#define listLast(l) ((l)->tail)  // ...
 #define listPrevNode(n) ((n)->prev)
 #define listNextNode(n) ((n)->next)
 #define listNodeValue(n) ((n)->value)
 
-#define listSetDupMethod(l,m) ((l)->dup = (m))
+// 设置指定链表的三个操作函数
+#define listSetDupMethod(l,m) ((l)->dup = (m))  // 设置结点复制函数
 #define listSetFreeMethod(l,m) ((l)->free = (m))
 #define listSetMatchMethod(l,m) ((l)->match = (m))
 
+// 查询指定链表三个操作函数
 #define listGetDupMethod(l) ((l)->dup)
 #define listGetFree(l) ((l)->free)
 #define listGetMatchMethod(l) ((l)->match)
 
-/* Prototypes */
+/* 模块提供api Prototypes */
 list *listCreate(void);
 void listRelease(list *list);
 list *listAddNodeHead(list *list, void *value);
 list *listAddNodeTail(list *list, void *value);
-list *listInsertNode(list *list, listNode *old_node, void *value, int after);
+list *listInsertNode(list *list, listNode *old_node, void *value, int after);  // 在链表指定结点后或前插入新结点，after!=0是后，否则是前
 void listDelNode(list *list, listNode *node);
-listIter *listGetIterator(list *list, int direction);
+listIter *listGetIterator(list *list, int direction);  // 按指定方向获取当前链表的迭代器
 listNode *listNext(listIter *iter);
 void listReleaseIterator(listIter *iter);
 list *listDup(list *orig);
 listNode *listSearchKey(list *list, void *key);
 listNode *listIndex(list *list, long index);
-void listRewind(list *list, listIter *li);
-void listRewindTail(list *list, listIter *li);
-void listRotate(list *list);
+void listRewind(list *list, listIter *li);  // 迭代器重置到队头
+void listRewindTail(list *list, listIter *li);  // 迭代器重置到队尾
+void listRotate(list *list);  //
 
-/* Directions for iterators */
-#define AL_START_HEAD 0
-#define AL_START_TAIL 1
+/* 迭代方向 Directions for iterators */
+#define AL_START_HEAD 0  // 从头向尾
+#define AL_START_TAIL 1  // 从尾向头
 
 #endif /* __ADLIST_H__ */

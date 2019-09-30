@@ -299,7 +299,7 @@ listNode *listSearchKey(list *list, void *key)
     return NULL;
 }
 
-/* Return the element at the specified zero-based index
+/* 取给定索引位置的元素，正数从头向后，负数从尾向前 Return the element at the specified zero-based index
  * where 0 is the head, 1 is the element next to head
  * and so on. Negative integers are used in order to count
  * from the tail, -1 is the last element, -2 the penultimate
@@ -318,7 +318,7 @@ listNode *listIndex(list *list, long index) {
     return n;
 }
 
-/* Rotate the list removing the tail node and inserting it to the head. */
+/* 循环右移，尾结点移到头部 Rotate the list removing the tail node and inserting it to the head. */
 void listRotate(list *list) {
     listNode *tail = list->tail;
 

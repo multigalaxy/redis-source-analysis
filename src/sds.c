@@ -429,14 +429,14 @@ sds sdscatsds(sds s, const sds t) {
     return sdscatlen(s, t, sdslen(t));
 }
 
-/* Destructively modify the sds string 's' to hold the specified binary
+/* 修改s指向的字符串内容，地址不变 Destructively modify the sds string 's' to hold the specified binary
  * safe string pointed by 't' of length 'len' bytes. */
 sds sdscpylen(sds s, const char *t, size_t len) {
     if (sdsalloc(s) < len) {
         s = sdsMakeRoomFor(s,len-sdslen(s));
         if (s == NULL) return NULL;
     }
-    memcpy(s, t, len);
+    memcpy(s, t, len);  // 将t所指地址内容，拷贝n个字节复制到s指向的地址所在的空间
     s[len] = '\0';
     sdssetlen(s, len);
     return s;

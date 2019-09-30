@@ -67,7 +67,7 @@ static int _dictInit(dict *ht, dictType *type, void *privDataPtr);
 
 /* -------------------------- hash functions -------------------------------- */
 
-/* Thomas Wang's 32 bit Mix Function */
+/* 计算32位整型哈希值的算法 Thomas Wang's 32 bit Mix Function */
 unsigned int dictIntHashFunction(unsigned int key)
 {
     key += ~(key << 15);
@@ -79,6 +79,7 @@ unsigned int dictIntHashFunction(unsigned int key)
     return key;
 }
 
+/* 哈希随机种子 */
 static uint32_t dict_hash_function_seed = 5381;
 
 void dictSetHashFunctionSeed(uint32_t seed) {
@@ -89,7 +90,8 @@ uint32_t dictGetHashFunctionSeed(void) {
     return dict_hash_function_seed;
 }
 
-/* MurmurHash2, by Austin Appleby
+/* 生成hash值函数，最新的为Murmurhash3算法
+ * MurmurHash2, by Austin Appleby
  * Note - This code makes a few assumptions about how your machine behaves -
  * 1. We can read a 4-byte value from any address without crashing
  * 2. sizeof(int) == 4
@@ -103,18 +105,18 @@ uint32_t dictGetHashFunctionSeed(void) {
 unsigned int dictGenHashFunction(const void *key, int len) {
     /* 'm' and 'r' are mixing constants generated offline.
      They're not really 'magic', they just happen to work well.  */
-    uint32_t seed = dict_hash_function_seed;
+    uint32_t seed = dict_hash_function_seed;  // 5381 实验证明是重复次数相对少的值
     const uint32_t m = 0x5bd1e995;
     const int r = 24;
 
-    /* Initialize the hash to a 'random' value */
+    /* 初始化指定长度的哈希值 Initialize the hash to a 'random' value */
     uint32_t h = seed ^ len;
 
-    /* Mix 4 bytes at a time into the hash */
-    const unsigned char *data = (const unsigned char *)key;
+    /* key分成n个组，每组4个字节，即一个整型大小，进行n次运算 => Mix 4 bytes at a time into the hash */
+    const unsigned char *data = (const unsigned char *)key;  // data指向了跟key同一个地址
 
     while(len >= 4) {
-        uint32_t k = *(uint32_t*)data;
+        uint32_t k = *(uint32_t*)data;  // 取data即key的值，字符串按字节顺序转成整型
 
         k *= m;
         k ^= k >> r;
@@ -123,18 +125,19 @@ unsigned int dictGenHashFunction(const void *key, int len) {
         h *= m;
         h ^= k;
 
-        data += 4;
+        data += 4;  // 指针向下移4个字节，即一个整型大小
         len -= 4;
     }
 
-    /* Handle the last few bytes of the input array  */
+    /* 处理最后几个字节的data Handle the last few bytes of the input array  */
     switch(len) {
     case 3: h ^= data[2] << 16;
     case 2: h ^= data[1] << 8;
     case 1: h ^= data[0]; h *= m;
     };
 
-    /* Do a few final mixes of the hash to ensure the last few
+    /* 处理哈希值h，确保最后几个字节分配的相对离散些
+     * Do a few final mixes of the hash to ensure the last few
      * bytes are well-incorporated. */
     h ^= h >> 13;
     h *= m;

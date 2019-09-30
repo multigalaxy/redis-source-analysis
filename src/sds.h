@@ -34,7 +34,7 @@
  * 1）、长度可控，不用字节对齐，节省空间；取长度复杂度降低O(1)；可通过alloc预分配空间(参考sdsMakeRoomFor函数)，减少内存分配，而且不会内存溢出，默认是1024 * 1024=1M。
  * 2）、兼容c字符串的'\0'结尾标识，可以存储文本或任意二进制的数据，直接使用len决定了字符串大小而非拿'\0'判断结束；兼容c字符串库<string.h>的部分函数，如strcasecmp、printf等
  */
-#ifndef __SDS_H
+#ifndef __SDS_H  // __sds_header
 #define __SDS_H
 
 // sds字符串默认预分配大小是1M
@@ -160,7 +160,7 @@ static inline size_t sdsavail(const sds s) {
     return 0;
 }
 
-// 内联：设置sds实际使用长度
+/* 内联：设置sds实际使用长度 */
 static inline void sdssetlen(sds s, size_t newlen) {
     unsigned char flags = s[-1];
     switch(flags&SDS_TYPE_MASK) {
@@ -257,9 +257,9 @@ static inline void sdssetalloc(sds s, size_t newlen) {
  **/
 sds sdsnewlen(const void *init, size_t initlen);  // 生成s，按任意指定数据
 sds sdsnew(const char *init);  // 生成s，指定字符串
-sds sdsempty(void);  // 置为空串，len=0
-sds sdsdup(const sds s);  // 构造一个新的字符串，s作为初始值
-void sdsfree(sds s);  // 释放
+sds sdsempty(void);  // 创建空串，len=0
+sds sdsdup(const sds s);  // 构造一个新的字符串，s作为初始值，与cpy不同的是，dup是构造新地址，cpy只是内容变了
+void sdsfree(sds s);  // 释放内存
 sds sdsgrowzero(sds s, size_t len);  // 实际长度增加到指定长度，alloc长度也要增加len-curlen的量
 sds sdscatlen(sds s, const void *t, size_t len);  // 连接两个串，任意串*t按指定的len连接到s
 sds sdscat(sds s, const char *t);  // 连接两个串，必须是c字符串，内部调用的sdscatlen，len=strlen(t)

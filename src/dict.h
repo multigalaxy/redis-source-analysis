@@ -1,4 +1,5 @@
-/* Hash Tables Implementation.
+/*
+ * Hash Tables Implementation.
  *
  * This file implements in-memory hash tables with insert/del/replace/find/
  * get-random-element operations. Hash tables will auto-resize if needed
@@ -32,7 +33,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
+/* 哈希表实现，字典使用哈希表作为底层实现，一个哈希表有多个哈希结点，一个节点保存一个键值对 */
 #include <stdint.h>
 
 #ifndef __DICT_H
@@ -44,62 +45,98 @@
 /* Unused arguments generate annoying warnings... */
 #define DICT_NOTUSED(V) ((void) V)
 
+/* 底层哈希表节点结构体 */
 typedef struct dictEntry {
+    // 键=8字节
     void *key;
+
+    // 值=取最大长度，然后对齐到8的倍数
     union {
-        void *val;
-        uint64_t u64;
-        int64_t s64;
-        double d;
+        void *val;  // 8
+        uint64_t u64;  // 8 无符号长整型
+        int64_t s64;  // 8
+        double d;  // 8
     } v;
+
+    // 指向哈希表下个节点，将哈希冲突的键值对串起来，形成链表=8字节
     struct dictEntry *next;
 } dictEntry;
 
+/* 定义字典类型特定函数 */
 typedef struct dictType {
+    // 计算哈希值的函数
     unsigned int (*hashFunction)(const void *key);
+
+    // 复制键的函数，地址变了
     void *(*keyDup)(void *privdata, const void *key);
+
+    // 复制键值的函数，地址变了
     void *(*valDup)(void *privdata, const void *obj);
+
+    // 对比键的函数
     int (*keyCompare)(void *privdata, const void *key1, const void *key2);
+
+    // 销毁键的函数
     void (*keyDestructor)(void *privdata, void *key);
+
+    // 销毁键值的函数
     void (*valDestructor)(void *privdata, void *obj);
 } dictType;
 
-/* This is our hash table structure. Every dictionary has two of this as we
+/* 定义底层哈希表结构 This is our hash table structure. Every dictionary has two of this as we
  * implement incremental rehashing, for the old to the new table. */
 typedef struct dictht {
+    // 依赖哈希结点，指定二维哈希表元素表，第一维存哈希算法后的节点地址，第二维存哈希冲突的那个链表的各个节点地址（参看dictEntry的next指针）
     dictEntry **table;
+
+    // 哈希表大小
     unsigned long size;
+
+    // 哈希表大小掩码，计算索引值，总是等于size-1
     unsigned long sizemask;
+
+    // 该哈希表已有节点的数量
     unsigned long used;
 } dictht;
 
+/* 定义字典结构 */
 typedef struct dict {
+    // 指明特定类型函数
     dictType *type;
+
+    // 私有数据，传给特定函数的参数
     void *privdata;
+
+    // 声明两个哈希表，只使用第一个，第二个用来对ht[0]进行rehash操作时使用
     dictht ht[2];
+
+    // 进行rehash操作的进度，没有则为-1
     long rehashidx; /* rehashing not in progress if rehashidx == -1 */
+
+    // 当前正在执行的迭代器数量
     int iterators; /* number of iterators currently running */
 } dict;
 
-/* If safe is set to 1 this is a safe iterator, that means, you can call
+/* 定义字典迭代器 If safe is set to 1 this is a safe iterator, that means, you can call
  * dictAdd, dictFind, and other functions against the dictionary even while
  * iterating. Otherwise it is a non safe iterator, and only dictNext()
  * should be called while iterating. */
 typedef struct dictIterator {
-    dict *d;
-    long index;
-    int table, safe;
-    dictEntry *entry, *nextEntry;
+    dict *d;  // 指明要迭代的字典
+    long index;  // 迭代的索引位置
+    int table, safe;  // safe标识是否可以在字典结构上继续修改、查找等操作，如果不能只能调用迭代器下一个dictNext()
+    dictEntry *entry, *nextEntry;  // 当前和下一个迭代到的元素
     /* unsafe iterator fingerprint for misuse detection. */
     long long fingerprint;
 } dictIterator;
 
+/* 定义字典扫描函数 */
 typedef void (dictScanFunction)(void *privdata, const dictEntry *de);
 
-/* This is the initial size of every hash table */
+/* 哈希表的初始大小 This is the initial size of every hash table */
 #define DICT_HT_INITIAL_SIZE     4
 
-/* ------------------------------- Macros ------------------------------------*/
+/* ------------------------------- 定义几个操作字典素的宏 Macros ------------------------------------*/
 #define dictFreeVal(d, entry) \
     if ((d)->type->valDestructor) \
         (d)->type->valDestructor((d)->privdata, (entry)->v.val)
@@ -146,8 +183,8 @@ typedef void (dictScanFunction)(void *privdata, const dictEntry *de);
 #define dictSize(d) ((d)->ht[0].used+(d)->ht[1].used)
 #define dictIsRehashing(d) ((d)->rehashidx != -1)
 
-/* API */
-dict *dictCreate(dictType *type, void *privDataPtr);
+/* 模块api API */
+dict *dictCreate(dictType *type, void *privDataPtr);  // 创建哈希表
 int dictExpand(dict *d, unsigned long size);
 int dictAdd(dict *d, void *key, void *val);
 dictEntry *dictAddRaw(dict *d, void *key);
