@@ -116,7 +116,7 @@ unsigned int dictGenHashFunction(const void *key, int len) {
     const unsigned char *data = (const unsigned char *)key;  // data指向了跟key同一个地址
 
     while(len >= 4) {
-        uint32_t k = *(uint32_t*)data;  // 取data即key的值，字符串按字节顺序转成整型
+        uint32_t k = *(uint32_t*)data;  // 取data即key的值，字符串按顺序取4字节转成整型（小端存储，所以是低地址存低字节，结果是字符串的前四个字节反过来就是整型值了）
 
         k *= m;
         k ^= k >> r;
@@ -203,23 +203,24 @@ int dictResize(dict *d)
     return dictExpand(d, minimal);
 }
 
-/* Expand or create the hash table */
+/* 按指定长度扩展或新建一个哈希表 Expand or create the hash table */
 int dictExpand(dict *d, unsigned long size)
 {
     dictht n; /* the new hash table */
-    unsigned long realsize = _dictNextPower(size);
+    unsigned long realsize = _dictNextPower(size);  // 换算成2的倍数
 
-    /* the size is invalid if it is smaller than the number of
+    /* 如果哈希表正在rehash或指定大小比已存在数量还小，报错 the size is invalid if it is smaller than the number of
      * elements already inside the hash table */
     if (dictIsRehashing(d) || d->ht[0].used > size)
         return DICT_ERR;
 
-    /* Rehashing to the same table size is not useful. */
+    /* 指定大小跟当前大小相同，无需扩展 Rehashing to the same table size is not useful. */
     if (realsize == d->ht[0].size) return DICT_ERR;
 
     /* Allocate the new hash table and initialize all pointers to NULL */
     n.size = realsize;
     n.sizemask = realsize-1;
+    /* 哈希表本身结构大小，即节点地址大小 * 节点个数，实际表大小应该是每个节点*节点个数*/
     n.table = zcalloc(realsize*sizeof(dictEntry*));
     n.used = 0;
 
@@ -956,6 +957,7 @@ static unsigned long _dictNextPower(unsigned long size)
     unsigned long i = DICT_HT_INITIAL_SIZE;
 
     if (size >= LONG_MAX) return LONG_MAX + 1LU;
+    /* 求出的最终长度是>=指定长度的2的倍数 */
     while(1) {
         if (i >= size)
             return i;

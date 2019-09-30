@@ -185,7 +185,7 @@ typedef void (dictScanFunction)(void *privdata, const dictEntry *de);
 
 /* 模块api API */
 dict *dictCreate(dictType *type, void *privDataPtr);  // 创建哈希表
-int dictExpand(dict *d, unsigned long size);
+int dictExpand(dict *d, unsigned long size);  // 哈希表扩展
 int dictAdd(dict *d, void *key, void *val);
 dictEntry *dictAddRaw(dict *d, void *key);
 int dictReplace(dict *d, void *key, void *val);
