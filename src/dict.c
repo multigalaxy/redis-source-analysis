@@ -91,7 +91,7 @@ uint32_t dictGetHashFunctionSeed(void) {
     return dict_hash_function_seed;
 }
 
-/* 生成hash值的函数，最新的为Murmurhash3算法
+/* 生成hash值的函数，最新的为Murmurhash3算法，len=key的字节数
  * MurmurHash2, by Austin Appleby
  * Note - This code makes a few assumptions about how your machine behaves -
  * 1. We can read a 4-byte value from any address without crashing
