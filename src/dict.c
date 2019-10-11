@@ -82,6 +82,7 @@ unsigned int dictIntHashFunction(unsigned int key)
 /* 哈希随机种子 */
 static uint32_t dict_hash_function_seed = 5381;
 
+// 设置哈希函数随机种子
 void dictSetHashFunctionSeed(uint32_t seed) {
     dict_hash_function_seed = seed;
 }
@@ -90,7 +91,7 @@ uint32_t dictGetHashFunctionSeed(void) {
     return dict_hash_function_seed;
 }
 
-/* 生成hash值函数，最新的为Murmurhash3算法
+/* 生成hash值的函数，最新的为Murmurhash3算法
  * MurmurHash2, by Austin Appleby
  * Note - This code makes a few assumptions about how your machine behaves -
  * 1. We can read a 4-byte value from any address without crashing
@@ -129,7 +130,8 @@ unsigned int dictGenHashFunction(const void *key, int len) {
         len -= 4;
     }
 
-    /* 处理最后几个字节的data Handle the last few bytes of the input array  */
+    /* 处理最后几个字节的data 
+    Handle the last few bytes of the input array  */
     switch(len) {
     case 3: h ^= data[2] << 16;
     case 2: h ^= data[1] << 8;
@@ -190,7 +192,7 @@ int _dictInit(dict *d, dictType *type,
     return DICT_OK;
 }
 
-/* Resize the table to the minimal size that contains all the elements,
+/* 按使用长度重新调整哈希表大小 Resize the table to the minimal size that contains all the elements,
  * but with the invariant of a USED/BUCKETS ratio near to <= 1 */
 int dictResize(dict *d)
 {
@@ -237,7 +239,9 @@ int dictExpand(dict *d, unsigned long size)
     return DICT_OK;
 }
 
-/* Performs N steps of incremental rehashing. Returns 1 if there are still
+/* 按指定桶数渐进迁移数据，一个桶bucket就是一条entry链
+ * 返回1表示还有待迁移的数据
+ * Performs N steps of incremental rehashing. Returns 1 if there are still
  * keys to move from the old to the new hash table, otherwise 0 is returned.
  *
  * Note that a rehashing step consists in moving a bucket (that may have more
@@ -247,26 +251,32 @@ int dictExpand(dict *d, unsigned long size)
  * will visit at max N*10 empty buckets in total, otherwise the amount of
  * work it does would be unbound and the function may block for a long time. */
 int dictRehash(dict *d, int n) {
-    int empty_visits = n*10; /* Max number of empty buckets to visit. */
-    if (!dictIsRehashing(d)) return 0;
+    int empty_visits = n*10; /* 最大访问空桶个数，以限制访问访问引起的阻塞问题 Max number of empty buckets to visit. */
+    if (!dictIsRehashing(d)) return 0;  // 只有正在进行rehash才能进行下去
 
+    // 分n步进行渐进式哈希，还要鉴别used是否为0表示已经空了，增加安全
     while(n-- && d->ht[0].used != 0) {
         dictEntry *de, *nextde;
 
-        /* Note that rehashidx can't overflow as we are sure there are more
+        /* 断言确保rehashidx没有越界
+         * Note that rehashidx can't overflow as we are sure there are more
          * elements because ht[0].used != 0 */
         assert(d->ht[0].size > (unsigned long)d->rehashidx);
+        // 跳过空桶
         while(d->ht[0].table[d->rehashidx] == NULL) {
             d->rehashidx++;
             if (--empty_visits == 0) return 1;
         }
+        // 取出一个桶
         de = d->ht[0].table[d->rehashidx];
-        /* Move all the keys in this bucket from the old to the new hash HT */
+        /* 把当前桶指向的节点全部移动到新表里
+         * Move all the keys in this bucket from the old to the new hash HT */
         while(de) {
             unsigned int h;
 
             nextde = de->next;
-            /* Get the index in the new hash table */
+            /* 获取key在表中的位置索引，把已在第二张表中该桶的初始节点链在新插入节点的后面，即新插入的节点在该桶的最前面
+             * Get the index in the new hash table */
             h = dictHashKey(d, de->key) & d->ht[1].sizemask;
             de->next = d->ht[1].table[h];
             d->ht[1].table[h] = de;
@@ -274,11 +284,13 @@ int dictRehash(dict *d, int n) {
             d->ht[1].used++;
             de = nextde;
         }
+        // 当前桶置空，并指向下一个桶索引
         d->ht[0].table[d->rehashidx] = NULL;
         d->rehashidx++;
     }
 
-    /* Check if we already rehashed the whole table... */
+    /* 检查是否已rehash完所有桶，把旧表置为新表，旧表重新置空，rehash标识改为不可哈希
+     * Check if we already rehashed the whole table... */
     if (d->ht[0].used == 0) {
         zfree(d->ht[0].table);
         d->ht[0] = d->ht[1];
@@ -291,6 +303,7 @@ int dictRehash(dict *d, int n) {
     return 1;
 }
 
+/* 当前毫秒数 */
 long long timeInMilliseconds(void) {
     struct timeval tv;
 
@@ -298,7 +311,8 @@ long long timeInMilliseconds(void) {
     return (((long long)tv.tv_sec)*1000)+(tv.tv_usec/1000);
 }
 
-/* Rehash for an amount of time between ms milliseconds and ms+1 milliseconds */
+/* active rehash方式：在指定ms毫秒数内，循环每次渐进式迁移100个桶，直到时间耗尽
+Rehash for an amount of time between ms milliseconds and ms+1 milliseconds */
 int dictRehashMilliseconds(dict *d, int ms) {
     long long start = timeInMilliseconds();
     int rehashes = 0;
@@ -407,9 +421,9 @@ int dictReplace(dict *d, void *key, void *val)
  *
  * See dictAddRaw() for more information. */
 dictEntry *dictReplaceRaw(dict *d, void *key) {
-    dictEntry *entry = dictFind(d,key);
+    dictEntry *entry = dictFind(d,key);  // 先查找key是否存在，
 
-    return entry ? entry : dictAddRaw(d,key);
+    return entry ? entry : dictAddRaw(d,key);  // 如果key存在直接返回，不存在先添加后返回新的
 }
 
 /* Search and remove an element */
@@ -559,6 +573,7 @@ long long dictFingerprint(dict *d) {
     return hash;
 }
 
+/* 创建一个指定字典的非安全迭代器 */
 dictIterator *dictGetIterator(dict *d)
 {
     dictIterator *iter = zmalloc(sizeof(*iter));
@@ -572,6 +587,7 @@ dictIterator *dictGetIterator(dict *d)
     return iter;
 }
 
+// 创建一个指定字典的安全迭代器
 dictIterator *dictGetSafeIterator(dict *d) {
     dictIterator *i = dictGetIterator(d);
 
@@ -1074,6 +1090,7 @@ size_t _dictGetStatsHt(char *buf, size_t bufsize, dictht *ht, int tableid) {
     return strlen(buf);
 }
 
+/* 获取指定字典的一些统计数据 */
 void dictGetStats(char *buf, size_t bufsize, dict *d) {
     size_t l;
     char *orig_buf = buf;

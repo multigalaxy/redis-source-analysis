@@ -53,9 +53,9 @@ typedef struct dictEntry {
     // 值=取最大长度，然后对齐到8的倍数
     union {
         void *val;  // 8
-        uint64_t u64;  // 8 无符号长整型
-        int64_t s64;  // 8
-        double d;  // 8
+        uint64_t u64;  // 8 无符号长整型，【用于其他模块使用】
+        int64_t s64;  // 8【用于其他模块使用】
+        double d;  // 8【用于其他模块使用】
     } v;
 
     // 指向哈希表下个节点，将哈希冲突的键值对串起来，形成链表=8字节
@@ -124,7 +124,7 @@ typedef struct dict {
 typedef struct dictIterator {
     dict *d;  // 指明要迭代的字典
     long index;  // 迭代的索引位置
-    int table, safe;  // safe标识是否可以在字典结构上继续修改、查找等操作，如果不能只能调用迭代器下一个dictNext()
+    int table, safe;  // safe标识是否可以在字典结构上继续修改、查找等操作，如果不能只能查询即调用迭代下一个dictNext()
     dictEntry *entry, *nextEntry;  // 当前和下一个迭代到的元素
     /* unsafe iterator fingerprint for misuse detection. */
     long long fingerprint;
@@ -136,7 +136,7 @@ typedef void (dictScanFunction)(void *privdata, const dictEntry *de);
 /* 哈希表的初始大小 This is the initial size of every hash table */
 #define DICT_HT_INITIAL_SIZE     4
 
-/* ------------------------------- 定义几个操作字典素的宏 Macros ------------------------------------*/
+/* ------------------------------- 定义几个操作字典元素的宏 Macros ------------------------------------*/
 #define dictFreeVal(d, entry) \
     if ((d)->type->valDestructor) \
         (d)->type->valDestructor((d)->privdata, (entry)->v.val)
@@ -185,34 +185,34 @@ typedef void (dictScanFunction)(void *privdata, const dictEntry *de);
 
 /* 模块api API */
 dict *dictCreate(dictType *type, void *privDataPtr);  // 创建哈希表
-int dictExpand(dict *d, unsigned long size);  // 哈希表扩展
-int dictAdd(dict *d, void *key, void *val);
-dictEntry *dictAddRaw(dict *d, void *key);
-int dictReplace(dict *d, void *key, void *val);
-dictEntry *dictReplaceRaw(dict *d, void *key);
-int dictDelete(dict *d, const void *key);
-int dictDeleteNoFree(dict *d, const void *key);
-void dictRelease(dict *d);
-dictEntry * dictFind(dict *d, const void *key);
-void *dictFetchValue(dict *d, const void *key);
-int dictResize(dict *d);
-dictIterator *dictGetIterator(dict *d);
-dictIterator *dictGetSafeIterator(dict *d);
-dictEntry *dictNext(dictIterator *iter);
-void dictReleaseIterator(dictIterator *iter);
-dictEntry *dictGetRandomKey(dict *d);
-unsigned int dictGetSomeKeys(dict *d, dictEntry **des, unsigned int count);
-void dictGetStats(char *buf, size_t bufsize, dict *d);
-unsigned int dictGenHashFunction(const void *key, int len);
-unsigned int dictGenCaseHashFunction(const unsigned char *buf, int len);
-void dictEmpty(dict *d, void(callback)(void*));
-void dictEnableResize(void);
-void dictDisableResize(void);
-int dictRehash(dict *d, int n);
-int dictRehashMilliseconds(dict *d, int ms);
-void dictSetHashFunctionSeed(unsigned int initval);
-unsigned int dictGetHashFunctionSeed(void);
-unsigned long dictScan(dict *d, unsigned long v, dictScanFunction *fn, void *privdata);
+int dictExpand(dict *d, unsigned long size);  // 哈希表扩展，返回0或1
+int dictAdd(dict *d, void *key, void *val);  // 添加指定键和值，返回0或1
+dictEntry *dictAddRaw(dict *d, void *key);  // 添加指定key，dictadd时调用，也可以作为api通过返回值判断是否key存在等
+int dictReplace(dict *d, void *key, void *val);  // 指定key的值换成指定val
+dictEntry *dictReplaceRaw(dict *d, void *key);  // 先查找key是否存在，存在就直接返回，否则返回新添加的key实体
+int dictDelete(dict *d, const void *key);  // 删除指定key并释放内存
+int dictDeleteNoFree(dict *d, const void *key);  // 删除指定key，不释放内存
+void dictRelease(dict *d);  // 删除指定字典
+dictEntry * dictFind(dict *d, const void *key);  // 查找指定key是否存在
+void *dictFetchValue(dict *d, const void *key);  // 获取指定key的值，返回指针
+int dictResize(dict *d);  // 按节点使用个数重新调整字典大小
+dictIterator *dictGetIterator(dict *d);  // 创建一个指定字典的非安全迭代器
+dictIterator *dictGetSafeIterator(dict *d);  // 创建一个指定字典的安全迭代器
+dictEntry *dictNext(dictIterator *iter);  // 迭代下一个节点
+void dictReleaseIterator(dictIterator *iter);  // 释放迭代器
+dictEntry *dictGetRandomKey(dict *d);  // 随机获取一个节点
+unsigned int dictGetSomeKeys(dict *d, dictEntry **des, unsigned int count);  // 随机获取几个键，并返回实际取到的数量
+void dictGetStats(char *buf, size_t bufsize, dict *d);  // 获取指定字典的一些统计数据
+unsigned int dictGenHashFunction(const void *key, int len);  // 生成hash值函数，最新的为Murmurhash3算法
+unsigned int dictGenCaseHashFunction(const unsigned char *buf, int len);  // 生成大小写敏感的hash值函数，最新的为Murmurhash3算法
+void dictEmpty(dict *d, void(callback)(void*));  // 置空字典
+void dictEnableResize(void);  // 全局：设置能重调哈希表大小的全局变量
+void dictDisableResize(void);  // 全局：设置不能重调哈希表大小全局变量
+int dictRehash(dict *d, int n);  // 重新哈希调整指定字典
+int dictRehashMilliseconds(dict *d, int ms);  // 在指定毫秒内，不断的批量迁移数据，每批100个
+void dictSetHashFunctionSeed(unsigned int initval);  // 设置哈希函数的随机数种子，默认是5381
+unsigned int dictGetHashFunctionSeed(void);  // 获取哈希函数随机种子
+unsigned long dictScan(dict *d, unsigned long v, dictScanFunction *fn, void *privdata);  // 按指定扫描函数和参数，迭代一遍指定的字典
 
 /* Hash table types */
 extern dictType dictTypeHeapStringCopyKey;
