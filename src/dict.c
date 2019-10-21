@@ -346,7 +346,9 @@ int dictAdd(dict *d, void *key, void *val)
     return DICT_OK;
 }
 
-/* Low level add. This function adds the entry but instead of setting
+/* 底层添加key，生成列表结点并返回
+ * key存在就返回该结点，不存在就添加
+ * Low level add. This function adds the entry but instead of setting
  * a value returns the dictEntry structure to the user, that will make
  * sure to fill the value field as he wishes.
  *
@@ -369,12 +371,16 @@ dictEntry *dictAddRaw(dict *d, void *key)
 
     if (dictIsRehashing(d)) _dictRehashStep(d);
 
-    /* Get the index of the new element, or -1 if
+    /*
+     * 计算此key所在的哈希位置，如果已存在计算后是-1，直接返回NULL
+     * Get the index of the new element, or -1 if
      * the element already exists. */
     if ((index = _dictKeyIndex(d, key)) == -1)
         return NULL;
 
-    /* Allocate the memory and store the new entry.
+    /*
+     * 如果正在hash使用表2，否则表1，然后分配结点内存
+     * Allocate the memory and store the new entry.
      * Insert the element in top, with the assumption that in a database
      * system it is more likely that recently added entries are accessed
      * more frequently. */
@@ -981,7 +987,9 @@ static unsigned long _dictNextPower(unsigned long size)
     }
 }
 
-/* Returns the index of a free slot that can be populated with
+/*
+ * 返回指定key的经过计算后的哈希索引，如果已存在返回-1
+ * Returns the index of a free slot that can be populated with
  * a hash entry for the given 'key'.
  * If the key already exists, -1 is returned.
  *

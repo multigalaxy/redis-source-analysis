@@ -117,7 +117,8 @@ typedef struct dict {
     int iterators; /* number of iterators currently running */
 } dict;
 
-/* 定义字典迭代器 If safe is set to 1 this is a safe iterator, that means, you can call
+/* 定义字典迭代器
+ * If safe is set to 1 this is a safe iterator, that means, you can call
  * dictAdd, dictFind, and other functions against the dictionary even while
  * iterating. Otherwise it is a non safe iterator, and only dictNext()
  * should be called while iterating. */
@@ -186,10 +187,10 @@ typedef void (dictScanFunction)(void *privdata, const dictEntry *de);
 /* 模块api API */
 dict *dictCreate(dictType *type, void *privDataPtr);  // 创建哈希表
 int dictExpand(dict *d, unsigned long size);  // 哈希表扩展，返回0或1
-int dictAdd(dict *d, void *key, void *val);  // 添加指定键和值，返回0或1
-dictEntry *dictAddRaw(dict *d, void *key);  // 添加指定key，dictadd时调用，也可以作为api通过返回值判断是否key存在等
-int dictReplace(dict *d, void *key, void *val);  // 指定key的值换成指定val
-dictEntry *dictReplaceRaw(dict *d, void *key);  // 先查找key是否存在，存在就直接返回，否则返回新添加的key实体
+int dictAdd(dict *d, void *key, void *val);  // 先添加key生成结点，再用结点添加val，返回0或1
+dictEntry *dictAddRaw(dict *d, void *key);  // 底层添加指定key，生成字典元素结点，dictadd时可调用，也可以作为api通过返回值判断是否key存在等
+int dictReplace(dict *d, void *key, void *val);  // 用参数指定的val替换指定key的val
+dictEntry *dictReplaceRaw(dict *d, void *key);  // 先查找key是否存在，存在就直接返回NULL，否则返回新添加的指定key的哈希结点
 int dictDelete(dict *d, const void *key);  // 删除指定key并释放内存
 int dictDeleteNoFree(dict *d, const void *key);  // 删除指定key，不释放内存
 void dictRelease(dict *d);  // 删除指定字典
