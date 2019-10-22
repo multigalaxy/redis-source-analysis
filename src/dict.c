@@ -79,7 +79,7 @@ unsigned int dictIntHashFunction(unsigned int key)
     return key;
 }
 
-/* 哈希随机种子 */
+/* 缺省的哈希随机种子 */
 static uint32_t dict_hash_function_seed = 5381;
 
 // 设置哈希函数随机种子
@@ -347,7 +347,7 @@ int dictAdd(dict *d, void *key, void *val)
 }
 
 /* 底层添加key，生成列表结点并返回
- * key存在就返回该结点，不存在就添加
+ * key存在就返NULL，不存在就添加并返回新结点
  * Low level add. This function adds the entry but instead of setting
  * a value returns the dictEntry structure to the user, that will make
  * sure to fill the value field as he wishes.
@@ -379,7 +379,7 @@ dictEntry *dictAddRaw(dict *d, void *key)
         return NULL;
 
     /*
-     * 如果正在hash使用表2，否则表1，然后分配结点内存
+     * 如果正在rehash，使用表2，否则表1，然后分配结点内存
      * Allocate the memory and store the new entry.
      * Insert the element in top, with the assumption that in a database
      * system it is more likely that recently added entries are accessed
@@ -395,7 +395,9 @@ dictEntry *dictAddRaw(dict *d, void *key)
     return entry;
 }
 
-/* Add an element, discarding the old if the key already exists.
+/*
+ * 用指定key的新val替换旧val，或直接添加
+ * Add an element, discarding the old if the key already exists.
  * Return 1 if the key was added from scratch, 0 if there was already an
  * element with such key and dictReplace() just performed a value update
  * operation. */
@@ -403,13 +405,16 @@ int dictReplace(dict *d, void *key, void *val)
 {
     dictEntry *entry, auxentry;
 
-    /* Try to add the element. If the key
+    /* 先尝试添加，成功返回1
+     * Try to add the element. If the key
      * does not exists dictAdd will suceed. */
     if (dictAdd(d, key, val) == DICT_OK)
         return 1;
-    /* It already exists, get the entry */
+    /* 否则查找已存在的结点
+     * It already exists, get the entry */
     entry = dictFind(d, key);
-    /* Set the new value and free the old one. Note that it is important
+    /* 设置结点的新val，然后删除旧结点的val
+     * Set the new value and free the old one. Note that it is important
      * to do that in this order, as the value may just be exactly the same
      * as the previous one. In this context, think to reference counting,
      * you want to increment (set), and then decrement (free), and not the

@@ -62,7 +62,9 @@ typedef struct dictEntry {
     struct dictEntry *next;
 } dictEntry;
 
-/* 定义字典类型特定函数 */
+/* 定义字典类型特定函数
+ * 即开放给需要的模块实现自己的函数功能，不需要的置位NULL即可，参考server.c的setDictType结构
+ * */
 typedef struct dictType {
     // 计算哈希值的函数
     unsigned int (*hashFunction)(const void *key);
@@ -137,7 +139,7 @@ typedef void (dictScanFunction)(void *privdata, const dictEntry *de);
 /* 哈希表的初始大小 This is the initial size of every hash table */
 #define DICT_HT_INITIAL_SIZE     4
 
-/* ------------------------------- 定义几个操作字典元素的宏 Macros ------------------------------------*/
+/* ------------------------------- 定义操作字典表的宏函数，由各个调用模块自己实现需要的type函数 Macros ------------------------------------*/
 #define dictFreeVal(d, entry) \
     if ((d)->type->valDestructor) \
         (d)->type->valDestructor((d)->privdata, (entry)->v.val)
@@ -184,8 +186,8 @@ typedef void (dictScanFunction)(void *privdata, const dictEntry *de);
 #define dictSize(d) ((d)->ht[0].used+(d)->ht[1].used)
 #define dictIsRehashing(d) ((d)->rehashidx != -1)
 
-/* 模块api API */
-dict *dictCreate(dictType *type, void *privDataPtr);  // 创建哈希表
+/* 模块 API */
+dict *dictCreate(dictType *type, void *privDataPtr);  // 创建哈希表，指针privDataPtr由需要使用字典的模块各自生成并传入
 int dictExpand(dict *d, unsigned long size);  // 哈希表扩展，返回0或1
 int dictAdd(dict *d, void *key, void *val);  // 先添加key生成结点，再用结点添加val，返回0或1
 dictEntry *dictAddRaw(dict *d, void *key);  // 底层添加指定key，生成字典元素结点，dictadd时可调用，也可以作为api通过返回值判断是否key存在等
@@ -211,7 +213,7 @@ void dictEnableResize(void);  // 全局：设置能重调哈希表大小的全�
 void dictDisableResize(void);  // 全局：设置不能重调哈希表大小全局变量
 int dictRehash(dict *d, int n);  // 重新哈希调整指定字典
 int dictRehashMilliseconds(dict *d, int ms);  // 在指定毫秒内，不断的批量迁移数据，每批100个
-void dictSetHashFunctionSeed(unsigned int initval);  // 设置哈希函数的随机数种子，默认是5381
+void dictSetHashFunctionSeed(unsigned int initval);  // 设置哈希函数的随机数种子，默认是5381，server.c里设置
 unsigned int dictGetHashFunctionSeed(void);  // 获取哈希函数随机种子
 unsigned long dictScan(dict *d, unsigned long v, dictScanFunction *fn, void *privdata);  // 按指定扫描函数和参数，迭代一遍指定的字典
 

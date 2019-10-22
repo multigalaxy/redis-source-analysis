@@ -70,7 +70,9 @@ double R_Zero, R_PosInf, R_NegInf, R_Nan;
 /* Global vars */
 struct redisServer server; /* server global state */
 
-/* Our command table.
+/*
+ * 定义所有支持的redis命令
+ * Our command table.
  *
  * Every entry is composed of the following fields:
  *
@@ -305,7 +307,8 @@ struct evictionPoolEntry *evictionPoolAlloc(void);
 
 /*============================ Utility functions ============================ */
 
-/* Low level logging. To use only for very big messages, otherwise
+/* 底层日志
+ * Low level logging. To use only for very big messages, otherwise
  * serverLog() is to prefer. */
 void serverLogRaw(int level, const char *msg) {
     const int syslogLevelMap[] = { LOG_DEBUG, LOG_INFO, LOG_NOTICE, LOG_WARNING };
@@ -536,17 +539,19 @@ unsigned int dictEncObjHash(const void *key) {
     }
 }
 
-/* Sets type hash table */
+/* 指明无序集合类型的特定的操作字典的函数
+ * Sets type hash table */
 dictType setDictType = {
-    dictEncObjHash,            /* hash function */
-    NULL,                      /* key dup */
-    NULL,                      /* val dup */
-    dictEncObjKeyCompare,      /* key compare */
-    dictObjectDestructor, /* key destructor */
-    NULL                       /* val destructor */
+    dictEncObjHash,            /* 哈希实现函数， hash function */
+    NULL,                      /* 无需键复制函数， key dup */
+    NULL,                      /* 无需键值复制函数， val dup */
+    dictEncObjKeyCompare,      /* 键比较函数， key compare */
+    dictObjectDestructor, /* 键销毁函数，key destructor */
+    NULL                       /* 无需键值销毁函数，val destructor */
 };
 
-/* Sorted sets hash (note: a skiplist is used in addition to the hash table) */
+/* 指明有序集合需要的字典操作函数
+ * Sorted sets hash (note: a skiplist is used in addition to the hash table) */
 dictType zsetDictType = {
     dictEncObjHash,            /* hash function */
     NULL,                      /* key dup */
@@ -1458,6 +1463,7 @@ void createSharedObjects(void) {
     shared.maxstring = createStringObject("maxstring",9);
 }
 
+/* 初始化服务器参数配置 */
 void initServerConfig(void) {
     int j;
 
@@ -1475,7 +1481,7 @@ void initServerConfig(void) {
     server.ipfd_count = 0;
     server.sofd = -1;
     server.protected_mode = CONFIG_DEFAULT_PROTECTED_MODE;
-    server.dbnum = CONFIG_DEFAULT_DBNUM;
+    server.dbnum = CONFIG_DEFAULT_DBNUM;  // 16个库
     server.verbosity = CONFIG_DEFAULT_VERBOSITY;
     server.maxidletime = CONFIG_DEFAULT_CLIENT_TIMEOUT;
     server.tcpkeepalive = CONFIG_DEFAULT_TCP_KEEPALIVE;
@@ -3813,7 +3819,8 @@ void setupSignalHandlers(void) {
 
 void memtest(size_t megabytes, int passes);
 
-/* Returns 1 if there is --sentinel among the arguments or if
+/* 检查是否开启了哨兵模式
+ * Returns 1 if there is --sentinel among the arguments or if
  * argv[0] is exactly "redis-sentinel". */
 int checkForSentinelMode(int argc, char **argv) {
     int j;
@@ -3841,6 +3848,7 @@ void loadDataFromDisk(void) {
     }
 }
 
+/* redis内存溢出处理句柄 */
 void redisOutOfMemoryHandler(size_t allocation_size) {
     serverLog(LL_WARNING,"Out Of Memory allocating %zu bytes!",
         allocation_size);
@@ -3959,6 +3967,7 @@ int redisIsSupervised(int mode) {
 }
 
 
+/* 服务器入口函数 */
 int main(int argc, char **argv) {
     struct timeval tv;
     int j;
@@ -3989,18 +3998,19 @@ int main(int argc, char **argv) {
     }
 #endif
 
-    /* We need to initialize our libraries, and the server configuration. */
+    /* 初始化操作：加载库和服务端配置等
+     * We need to initialize our libraries, and the server configuration. */
 #ifdef INIT_SETPROCTITLE_REPLACEMENT
     spt_init(argc, argv);
 #endif
-    setlocale(LC_COLLATE,"");
-    zmalloc_enable_thread_safeness();
-    zmalloc_set_oom_handler(redisOutOfMemoryHandler);
-    srand(time(NULL)^getpid());
-    gettimeofday(&tv,NULL);
-    dictSetHashFunctionSeed(tv.tv_sec^tv.tv_usec^getpid());
-    server.sentinel_mode = checkForSentinelMode(argc,argv);
-    initServerConfig();
+    setlocale(LC_COLLATE,"");  // 设置本地化函数，比如日期格式和货币符号等，共7个级别：此处是影响strcoll和strxfrm函数的级别，strcoll是按照设置的值比较字符串，如汉字是拼音；strxfrm是基本字符串拷贝的=strncpy
+    zmalloc_enable_thread_safeness();  // 开启内存分配线程安全
+    zmalloc_set_oom_handler(redisOutOfMemoryHandler);  // 设置内存溢出处理句柄
+    srand(time(NULL)^getpid());  // 设置随机生成器初始化函数，随机种子为以当前秒数为底数，以进程id为指数的值
+    gettimeofday(&tv,NULL);  // 设置当前时间，赋值给tv
+    dictSetHashFunctionSeed(tv.tv_sec^tv.tv_usec^getpid());  // 设置哈希字典随机种子函数，跟当前秒数，微妙数和进程有关系
+    server.sentinel_mode = checkForSentinelMode(argc,argv);  // 是否开启哨兵模式
+    initServerConfig();  // 初始化服务器参数配置
 
     /* Store the executable path and arguments in a safe place in order
      * to be able to restart the server later. */

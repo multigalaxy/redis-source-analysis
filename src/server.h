@@ -74,15 +74,15 @@ typedef long long mstime_t; /* millisecond time type. */
 #define C_OK                    0
 #define C_ERR                   -1
 
-/* Static server configuration */
-#define CONFIG_DEFAULT_HZ        10      /* Time interrupt calls/sec. */
+/* 静态变量配置 Static server configuration */
+#define CONFIG_DEFAULT_HZ        10      /* 时钟中断频率，每秒多少次 Time interrupt calls/sec. */
 #define CONFIG_MIN_HZ            1
-#define CONFIG_MAX_HZ            500
+#define CONFIG_MAX_HZ            500  // 最大500次中断每秒
 #define CONFIG_DEFAULT_SERVER_PORT        6379    /* TCP port */
 #define CONFIG_DEFAULT_TCP_BACKLOG       511     /* TCP listen backlog */
 #define CONFIG_DEFAULT_CLIENT_TIMEOUT       0       /* default client timeout: infinite */
-#define CONFIG_DEFAULT_DBNUM     16
-#define CONFIG_MAX_LINE    1024
+#define CONFIG_DEFAULT_DBNUM     16  // 默认库的数量
+#define CONFIG_MAX_LINE    1024  // 最大连接数
 #define CRON_DBS_PER_CALL 16
 #define NET_MAX_WRITES_PER_EVENT (1024*64)
 #define PROTO_SHARED_SELECT_CMDS 10
@@ -451,6 +451,7 @@ typedef long long mstime_t; /* millisecond time type. */
 #define serverPanic(_e) _serverPanic(#_e,__FILE__,__LINE__),_exit(1)
 
 /*-----------------------------------------------------------------------------
+ * redis底层数据类型
  * Data types
  *----------------------------------------------------------------------------*/
 
@@ -474,7 +475,8 @@ typedef struct redisObject {
  * precomputed value, otherwise we need to resort to a system call. */
 #define LRU_CLOCK() ((1000/server.hz <= LRU_CLOCK_RESOLUTION) ? server.lruclock : getLRUClock())
 
-/* Macro used to initialize a Redis object allocated on the stack.
+/* 初始化redis底层对象的宏
+ * Macro used to initialize a Redis object allocated on the stack.
  * Note that this macro is taken near the structure definition to make sure
  * we'll update it when the structure is changed, to avoid bugs like
  * bug #85 introduced exactly in this way. */
@@ -485,7 +487,10 @@ typedef struct redisObject {
     _var.ptr = _ptr; \
 } while(0)
 
-/* To improve the quality of the LRU approximation we take a set of keys
+/*
+ * lru回收key时，需要的踢出key的候选池
+ * 每个候选结点包含一个key和一个lru时间
+ * To improve the quality of the LRU approximation we take a set of keys
  * that are good candidate for eviction across freeMemoryIfNeeded() calls.
  *
  * Entries inside the eviciton pool are taken ordered by idle time, putting
@@ -498,25 +503,28 @@ struct evictionPoolEntry {
     sds key;                    /* Key name. */
 };
 
-/* Redis database representation. There are multiple databases identified
+/*
+ * redis db的结构体
+ * Redis database representation. There are multiple databases identified
  * by integers from 0 (the default database) up to the max configured
  * database. The database number is the 'id' field in the structure. */
 typedef struct redisDb {
-    dict *dict;                 /* The keyspace for this DB */
-    dict *expires;              /* Timeout of keys with a timeout set */
-    dict *blocking_keys;        /* Keys with clients waiting for data (BLPOP) */
-    dict *ready_keys;           /* Blocked keys that received a PUSH */
-    dict *watched_keys;         /* WATCHED keys for MULTI/EXEC CAS */
-    struct evictionPoolEntry *eviction_pool;    /* Eviction pool of keys */
-    int id;                     /* Database ID */
-    long long avg_ttl;          /* Average TTL, just for stats */
+    dict *dict;                 /* key存储的哈希字典，The keyspace for this DB */
+    dict *expires;              /* 设置了过期时间的所有key和过期时间，Timeout of keys with a timeout set */
+    dict *blocking_keys;        /* 客户端阻塞等待的所有keys。Keys with clients waiting for data (BLPOP) */
+    dict *ready_keys;           /* 客户端等待push推消息过来的所有keys，Blocked keys that received a PUSH */
+    dict *watched_keys;         /* 事务监控的所有keys，WATCHED keys for MULTI/EXEC CAS */
+    struct evictionPoolEntry *eviction_pool;    /* 待踢出的所有keys，Eviction pool of keys */
+    int id;                     /* 数据库id，Database ID */
+    long long avg_ttl;          /* 平均生存周期，只为统计用，Average TTL, just for stats */
 } redisDb;
 
-/* Client MULTI/EXEC state */
+/* 批量执行命令的结构体
+ * Client MULTI/EXEC state */
 typedef struct multiCmd {
-    robj **argv;
-    int argc;
-    struct redisCommand *cmd;
+    robj **argv;  //
+    int argc;  // 命令个数
+    struct redisCommand *cmd;  // 待执行的所有命令
 } multiCmd;
 
 typedef struct multiState {
@@ -560,7 +568,8 @@ typedef struct readyList {
     robj *key;
 } readyList;
 
-/* With multiplexing we need to take per-client state.
+/* 定义多路复用
+ * With multiplexing we need to take per-client state.
  * Clients are taken in a linked list. */
 typedef struct client {
     uint64_t id;            /* Client incremental unique ID. */

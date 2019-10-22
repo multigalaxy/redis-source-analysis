@@ -292,7 +292,8 @@ sds sdsmapchars(sds s, const char *from, const char *to, size_t setlen);  //  �
 sds sdsjoin(char **argv, int argc, char *sep);  // 把c字符串数组按指定的sep连接符连接起来
 sds sdsjoinsds(sds *argv, int argc, const char *sep, size_t seplen);  // 把sds字符串数组按指定的sep连接符连接起来
 
-/* 第二类 低级api函数 Low level functions exposed to the user API */
+/* 第二类 底层api函数
+ * Low level functions exposed to the user API */
 sds sdsMakeRoomFor(sds s, size_t addlen);  // 为sds扩展alloc总内存空间
 void sdsIncrLen(sds s, int incr);  // 增加s的实际长度。s被其他函数调用后可能需要改变长度。
 sds sdsRemoveFreeSpace(sds s);  // 删除空闲空间，重新整理一个sds，alloc=len
