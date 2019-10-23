@@ -71,7 +71,7 @@ double R_Zero, R_PosInf, R_NegInf, R_Nan;
 struct redisServer server; /* server global state */
 
 /*
- * 定义所有支持的redis命令
+ * 定义所有支持的redis命令和要执行的方法
  * Our command table.
  *
  * Every entry is composed of the following fields:
@@ -303,7 +303,7 @@ struct redisCommand redisCommandTable[] = {
     {"latency",latencyCommand,-2,"aslt",0,NULL,0,0,0,0,0}
 };
 
-struct evictionPoolEntry *evictionPoolAlloc(void);
+struct createZsetObject *evictionPoolAlloc(void);
 
 /*============================ Utility functions ============================ */
 
@@ -1373,6 +1373,7 @@ void beforeSleep(struct aeEventLoop *eventLoop) {
 
 /* =========================== Server initialization ======================== */
 
+/* 初始化所有客户端可共用的对象 */
 void createSharedObjects(void) {
     int j;
 
@@ -3129,11 +3130,11 @@ sds genRedisInfoString(char *section) {
             "migrate_cached_sockets:%ld\r\n",
             server.stat_numconnections,
             server.stat_numcommands,
-            getInstantaneousMetric(STATS_METRIC_COMMAND),
+            getInstantaneousMetric(STATS_METRIC_COMMAND),  // 按执行数量统计流量
             server.stat_net_input_bytes,
             server.stat_net_output_bytes,
-            (float)getInstantaneousMetric(STATS_METRIC_NET_INPUT)/1024,
-            (float)getInstantaneousMetric(STATS_METRIC_NET_OUTPUT)/1024,
+            (float)getInstantaneousMetric(STATS_METRIC_NET_INPUT)/1024,  // 按输入量统计，单位kbs
+            (float)getInstantaneousMetric(STATS_METRIC_NET_OUTPUT)/1024,  // 按输出量统计，单位kbs
             server.stat_rejected_conn,
             server.stat_sync_full,
             server.stat_sync_partial_ok,

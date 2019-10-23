@@ -263,7 +263,8 @@ uint32_t sdigits10(int64_t v) {
     }
 }
 
-/* Convert a long long into a string. Returns the number of
+/* 超长整型转成字符串形式，加上符号最长20位，最后再加上字符串结束标志\0，正好21位
+ * Convert a long long into a string. Returns the number of
  * characters needed to represent the number.
  * If the buffer is not big enough to store the string, 0 is returned.
  *

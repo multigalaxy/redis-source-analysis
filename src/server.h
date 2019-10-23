@@ -146,21 +146,21 @@ typedef long long mstime_t; /* millisecond time type. */
 #define ACTIVE_EXPIRE_CYCLE_SLOW 0
 #define ACTIVE_EXPIRE_CYCLE_FAST 1
 
-/* Instantaneous metrics tracking. */
-#define STATS_METRIC_SAMPLES 16     /* Number of samples per metric. */
-#define STATS_METRIC_COMMAND 0      /* Number of commands executed. */
-#define STATS_METRIC_NET_INPUT 1    /* Bytes read to network .*/
-#define STATS_METRIC_NET_OUTPUT 2   /* Bytes written to network. */
-#define STATS_METRIC_COUNT 3
+/* 流量统计相关配置 Instantaneous metrics tracking. */
+#define STATS_METRIC_SAMPLES 16     /* 每次统计指标样例数 Number of samples per metric. */
+#define STATS_METRIC_COMMAND 0      /* 以执行命令的数量的维度统计流量 Number of commands executed. */
+#define STATS_METRIC_NET_INPUT 1    /* 以读取网络字节数的维度统计流量 Bytes read to network .*/
+#define STATS_METRIC_NET_OUTPUT 2   /* 以写入网络字节数的维度统计流量 Bytes written to network. */
+#define STATS_METRIC_COUNT 3  /* 统计标准3种 */
 
-/* Protocol and I/O related defines */
-#define PROTO_MAX_QUERYBUF_LEN  (1024*1024*1024) /* 1GB max query buffer. */
-#define PROTO_IOBUF_LEN         (1024*16)  /* Generic I/O buffer size */
-#define PROTO_REPLY_CHUNK_BYTES (16*1024) /* 16k output buffer */
-#define PROTO_INLINE_MAX_SIZE   (1024*64) /* Max size of inline reads */
+/* 协议和i/o相关的定义 Protocol and I/O related defines */
+#define PROTO_MAX_QUERYBUF_LEN  (1024*1024*1024) /* 最大执行数据长度 1GB max query buffer. */
+#define PROTO_IOBUF_LEN         (1024*16)  /* 通用io缓冲区大小 Generic I/O buffer size */
+#define PROTO_REPLY_CHUNK_BYTES (16*1024) /* 输出缓冲区大小 16k output buffer */
+#define PROTO_INLINE_MAX_SIZE   (1024*64) /* 单行最大长度 Max size of inline reads */
 #define PROTO_MBULK_BIG_ARG     (1024*32)
-#define LONG_STR_SIZE      21          /* Bytes needed for long -> str + '\0' */
-#define AOF_AUTOSYNC_BYTES (1024*1024*32) /* fdatasync every 32MB */
+#define LONG_STR_SIZE      21          /* long转string类型需要的最大字节数（21位=最长19位无符号整型 + 1位负号 + 1位结束符） Bytes needed for long -> str + '\0' */
+#define AOF_AUTOSYNC_BYTES (1024*1024*32) /* aof持久化每次同步的最大数据量32MB fdatasync every 32MB */
 
 /* When configuring the server eventloop, we setup it so that the total number
  * of file descriptors we can handle are server.maxclients + RESERVED_FDS +
@@ -168,7 +168,7 @@ typedef long long mstime_t; /* millisecond time type. */
  * in order to make sure of not over provisioning more than 128 fds. */
 #define CONFIG_FDSET_INCR (CONFIG_MIN_RESERVED_FDS+96)
 
-/* Hash table parameters */
+/* 哈希表最小填充量，即超过此值就可以考虑rehash调整到能包含所有键值对的最小值 Hash table parameters */
 #define HASHTABLE_MIN_FILL        10      /* Minimal hash table fill 10% */
 
 /* Command flags. Please check the command table defined in the redis.c file
@@ -188,24 +188,26 @@ typedef long long mstime_t; /* millisecond time type. */
 #define CMD_ASKING 4096               /* "k" flag */
 #define CMD_FAST 8192                 /* "F" flag */
 
-/* Object types */
+/* redis对象类型，共5种，字符串、列表、集合、有序集合和哈希字典
+ * Object types */
 #define OBJ_STRING 0
 #define OBJ_LIST 1
 #define OBJ_SET 2
 #define OBJ_ZSET 3
 #define OBJ_HASH 4
 
-/* Objects encoding. Some kind of objects like Strings and Hashes can be
+/* redis对象编码类型，10种
+ * Objects encoding. Some kind of objects like Strings and Hashes can be
  * internally represented in multiple ways. The 'encoding' field of the object
  * is set to one of this fields for this object. */
-#define OBJ_ENCODING_RAW 0     /* Raw representation */
-#define OBJ_ENCODING_INT 1     /* Encoded as integer */
-#define OBJ_ENCODING_HT 2      /* Encoded as hash table */
-#define OBJ_ENCODING_ZIPMAP 3  /* Encoded as zipmap */
-#define OBJ_ENCODING_LINKEDLIST 4 /* Encoded as regular linked list */
-#define OBJ_ENCODING_ZIPLIST 5 /* Encoded as ziplist */
-#define OBJ_ENCODING_INTSET 6  /* Encoded as intset */
-#define OBJ_ENCODING_SKIPLIST 7  /* Encoded as skiplist */
+#define OBJ_ENCODING_RAW 0     /* 原样编码存储 Raw representation */
+#define OBJ_ENCODING_INT 1     /* 编码为整型 Encoded as integer */
+#define OBJ_ENCODING_HT 2      /* 编码为哈希表，即以哈希表存储 Encoded as hash table */
+#define OBJ_ENCODING_ZIPMAP 3  /* 以压缩字典存储 Encoded as zipmap */
+#define OBJ_ENCODING_LINKEDLIST 4 /* 以链表存储 Encoded as regular linked list */
+#define OBJ_ENCODING_ZIPLIST 5 /* 以压缩列表存储 Encoded as ziplist */
+#define OBJ_ENCODING_INTSET 6  /* 以整型集合存储 Encoded as intset */
+#define OBJ_ENCODING_SKIPLIST 7  /* 以跳跃表存储 Encoded as skiplist */
 #define OBJ_ENCODING_EMBSTR 8  /* Embedded sds string encoding */
 #define OBJ_ENCODING_QUICKLIST 9 /* Encoded as linked list of ziplists */
 
@@ -455,9 +457,10 @@ typedef long long mstime_t; /* millisecond time type. */
  * Data types
  *----------------------------------------------------------------------------*/
 
-/* A redis object, that is a type able to hold a string / list / set */
+/* redis对象，可用来存储string/list/set三种数据结构，比如存储字符串时，是（robj + sdshdr + string）三部分构成
+ * A redis object, that is a type able to hold a string / list / set */
 
-/* The actual Redis Object */
+/* 实际的redis对象结构体，占用17个字节。The actual Redis Object */
 #define LRU_BITS 24
 #define LRU_CLOCK_MAX ((1<<LRU_BITS)-1) /* Max value of obj->lru */
 #define LRU_CLOCK_RESOLUTION 1000 /* LRU clock resolution in ms */
@@ -466,7 +469,7 @@ typedef struct redisObject {
     unsigned encoding:4;
     unsigned lru:LRU_BITS; /* lru time (relative to server.lruclock) */
     int refcount;
-    void *ptr;
+    void *ptr;  // 存放值的指针
 } robj;
 
 /* Macro used to obtain the current LRU clock.
@@ -475,7 +478,7 @@ typedef struct redisObject {
  * precomputed value, otherwise we need to resort to a system call. */
 #define LRU_CLOCK() ((1000/server.hz <= LRU_CLOCK_RESOLUTION) ? server.lruclock : getLRUClock())
 
-/* 初始化redis底层对象的宏
+/* 初始化redis对象的宏
  * Macro used to initialize a Redis object allocated on the stack.
  * Note that this macro is taken near the structure definition to make sure
  * we'll update it when the structure is changed, to avoid bugs like
@@ -499,7 +502,7 @@ typedef struct redisObject {
  * Empty entries have the key pointer set to NULL. */
 #define MAXMEMORY_EVICTION_POOL_SIZE 16
 struct evictionPoolEntry {
-    unsigned long long idle;    /* Object idle time. */
+    unsigned long long idle;    /* 8字节 Object idle time. */
     sds key;                    /* Key name. */
 };
 
@@ -519,17 +522,18 @@ typedef struct redisDb {
     long long avg_ttl;          /* 平均生存周期，只为统计用，Average TTL, just for stats */
 } redisDb;
 
-/* 批量执行命令的结构体
+/* 事务中单个命令的结构体
  * Client MULTI/EXEC state */
 typedef struct multiCmd {
-    robj **argv;  //
-    int argc;  // 命令个数
-    struct redisCommand *cmd;  // 待执行的所有命令
+    robj **argv;  // 命令参数
+    int argc;  // 命令参数个数
+    struct redisCommand *cmd;  // 待执行的命令
 } multiCmd;
 
+/* 事务结构体 */
 typedef struct multiState {
-    multiCmd *commands;     /* Array of MULTI commands */
-    int count;              /* Total number of MULTI commands */
+    multiCmd *commands;     /* 所有命令构成的数组 Array of MULTI commands */
+    int count;              /* 批量命令的个数 Total number of MULTI commands */
     int minreplicas;        /* MINREPLICAS for synchronous replication */
     time_t minreplicas_timeout; /* MINREPLICAS timeout as unixtime. */
 } multiState;
@@ -568,21 +572,21 @@ typedef struct readyList {
     robj *key;
 } readyList;
 
-/* 定义多路复用
+/* 定义客户端请求连接结构体，记录每个客户端状态 所有请求的命令通过此结构体处理
  * With multiplexing we need to take per-client state.
  * Clients are taken in a linked list. */
 typedef struct client {
-    uint64_t id;            /* Client incremental unique ID. */
-    int fd;                 /* Client socket. */
-    redisDb *db;            /* Pointer to currently SELECTed DB. */
-    int dictid;             /* ID of the currently SELECTed DB. */
-    robj *name;             /* As set by CLIENT SETNAME. */
+    uint64_t id;            /* 客户端自增id Client incremental unique ID. */
+    int fd;                 /* 连接套接字 Client socket. */
+    redisDb *db;            /* 客户端选中的库指针 Pointer to currently SELECTed DB. */
+    int dictid;             /* 客户端选中的库id ID of the currently SELECTed DB. */
+    robj *name;             /* 客户端连接名称 As set by CLIENT SETNAME. */
     sds querybuf;           /* Buffer we use to accumulate client queries. */
     size_t querybuf_peak;   /* Recent (100ms or more) peak of querybuf size. */
-    int argc;               /* Num of arguments of current command. */
-    robj **argv;            /* Arguments of current command. */
-    struct redisCommand *cmd, *lastcmd;  /* Last command executed. */
-    int reqtype;            /* Request protocol type: PROTO_REQ_* */
+    int argc;               /* 客户端命令参数个数 Num of arguments of current command. */
+    robj **argv;            /* 客户端命令的指针，可用来取命令参数 Arguments of current command. */
+    struct redisCommand *cmd, *lastcmd;  /* 最后一条执行的命令 Last command executed. */
+    int reqtype;            /* 请求类型 Request protocol type: PROTO_REQ_* */
     int multibulklen;       /* Number of multi bulk arguments left to read. */
     long bulklen;           /* Length of bulk argument in multi bulk request. */
     list *reply;            /* List of reply objects to send to the client. */
@@ -629,6 +633,7 @@ struct saveparam {
     int changes;
 };
 
+/* 声明所有客户端可共享的对象 */
 struct sharedObjectsStruct {
     robj *crlf, *ok, *err, *emptybulk, *czero, *cone, *cnegone, *pong, *space,
     *colon, *nullbulk, *nullmultibulk, *queued,
@@ -644,31 +649,34 @@ struct sharedObjectsStruct {
     *bulkhdr[OBJ_SHARED_BULKHDR_LEN];  /* "$<value>\r\n" */
 };
 
-/* ZSETs use a specialized version of Skiplists */
+/* 跳跃表结点的结构体 ZSETs use a specialized version of Skiplists */
 typedef struct zskiplistNode {
-    robj *obj;
-    double score;
-    struct zskiplistNode *backward;
-    struct zskiplistLevel {
-        struct zskiplistNode *forward;
-        unsigned int span;
-    } level[];
+    robj *obj;  // = redis对象 = member = 成员对象，存结点数据
+    double score;  // 浮点，存分值，分值可相同，相同的按obj的字典顺序排列
+    struct zskiplistNode *backward;  // 后退指针
+    struct zskiplistLevel {  // 跳跃表层级结构体
+        struct zskiplistNode *forward;  // 前进指针，指向的不一定是下个连续结点
+        unsigned int span;  // 跨度，两个结点之间的距离
+    } level[];  // 数组表示多层
 } zskiplistNode;
 
+/* 跳跃表结构体 */
 typedef struct zskiplist {
-    struct zskiplistNode *header, *tail;
-    unsigned long length;
-    int level;
+    struct zskiplistNode *header, *tail;  // 表头和表尾结点
+    unsigned long length;  // 结点数量
+    int level;  // 最大层数
 } zskiplist;
 
+/* 有序集合结构体，包含一个字典，一个跳跃表*/
 typedef struct zset {
     dict *dict;
-    zskiplist *zsl;
+    zskiplist *zsl;  // 存放数据
 } zset;
 
+/* redis输出缓冲区限制配置，即发送给客户端的数据大小限制，参看networking.c里 */
 typedef struct clientBufferLimitsConfig {
-    unsigned long long hard_limit_bytes;
-    unsigned long long soft_limit_bytes;
+    unsigned long long hard_limit_bytes;  // 设置不为0时，判断输出字符串大于此值，直接中断链接
+    unsigned long long soft_limit_bytes;  // 设置不为0时，判断输出字符串大于此值，且持续时间超过了soft_limit_seconds，直接中断链接
     time_t soft_limit_seconds;
 } clientBufferLimitsConfig;
 
@@ -785,7 +793,8 @@ struct redisServer {
     size_t resident_set_size;       /* RSS sampled in serverCron(). */
     long long stat_net_input_bytes; /* Bytes read from network. */
     long long stat_net_output_bytes; /* Bytes written to network. */
-    /* The following two are used to track instantaneous metrics, like
+    /* 定义流量指标的两个纬度
+     * The following two are used to track instantaneous metrics, like
      * number of operations per second, network traffic. */
     struct {
         long long last_sample_time; /* Timestamp of last sample in ms */

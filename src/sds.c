@@ -454,8 +454,8 @@ sds sdscpy(sds s, const char *t) {
  *
  * The function returns the length of the null-terminated string
  * representation stored at 's'. */
-// ll整型转成字符串存储，并返回字符串长度。ll=10000 => "10000\0"，-3123 => "-3123\0"
-#define SDS_LLSTR_SIZE 21  // ll to str，s至少分配21个字节
+// 超长整型转成字符串存储，并返回字符串长度。ll=10000 => "10000\0"，-3123 => "-3123\0"
+#define SDS_LLSTR_SIZE 21  // ll to str，21个字节=ll无符号型最长19位 + 负号1位 + 结束符1位
 int sdsll2str(char *s, long long value) {
     char *p, aux;  //
     unsigned long long v;

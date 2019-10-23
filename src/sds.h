@@ -50,7 +50,7 @@ typedef char *sds;
 /* Note: sdshdr5 is never used, we just access the flags byte directly.
  * However is here to document the layout of type 5 SDS strings. */
 // 下面是保存字符串对象的结构
-// __attribute__ 用来在函数或数据声明中设置属性，后面跟以((attribute-list))的形式。这里((packed))表示编译器不要按自己对齐优化，按实际存放字节数对齐
+// __attribute__ 用来在函数或数据声明中设置属性，后面跟以((attribute-list))的形式。这里((__packed__))表示编译器不要按自己对齐优化，按实际存放字节数对齐
 
 struct __attribute__ ((__packed__)) sdshdr5 {
     unsigned char flags; /* 3 lsb of type, and 5 msb of string length */  // 最低三位是类型，高5位带边长度
