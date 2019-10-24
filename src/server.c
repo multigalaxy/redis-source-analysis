@@ -1373,7 +1373,7 @@ void beforeSleep(struct aeEventLoop *eventLoop) {
 
 /* =========================== Server initialization ======================== */
 
-/* 初始化所有客户端可共用的对象 */
+/* 初始化所有客户端可共用的全局对象，比如一些错误码 */
 void createSharedObjects(void) {
     int j;
 
@@ -1879,12 +1879,14 @@ void resetServerStats(void) {
     server.aof_delayed_fsync = 0;
 }
 
+/* 初始化收尾工作，包括信号量、全局变量*/
 void initServer(void) {
     int j;
 
-    signal(SIGHUP, SIG_IGN);
-    signal(SIGPIPE, SIG_IGN);
-    setupSignalHandlers();
+    // 信号量处理
+    signal(SIGHUP, SIG_IGN);  // ign=ignore，忽略掉sighup信号，即退出server进程的信号被忽略掉
+    signal(SIGPIPE, SIG_IGN);  // 忽略客户端的写管道发现读进程结束产生的信号
+    setupSignalHandlers();  // 处理其他信号量
 
     if (server.syslog_enabled) {
         openlog(server.syslog_ident, LOG_PID | LOG_NDELAY | LOG_NOWAIT,
@@ -2021,7 +2023,8 @@ void initServer(void) {
     bioInit();
 }
 
-/* Populates the Redis Command Table starting from the hard coded list
+/* 填充redis命令表
+ * Populates the Redis Command Table starting from the hard coded list
  * we have on top of redis.c file. */
 void populateCommandTable(void) {
     int j;
@@ -3999,7 +4002,7 @@ int main(int argc, char **argv) {
     }
 #endif
 
-    /* 初始化操作：加载库和服务端配置等
+    /* 1、初始化操作：加载全局库和全局服务端配置等 => initServerConfig
      * We need to initialize our libraries, and the server configuration. */
 #ifdef INIT_SETPROCTITLE_REPLACEMENT
     spt_init(argc, argv);
@@ -4020,7 +4023,8 @@ int main(int argc, char **argv) {
     server.exec_argv[argc] = NULL;
     for (j = 0; j < argc; j++) server.exec_argv[j] = zstrdup(argv[j]);
 
-    /* We need to init sentinel right now as parsing the configuration file
+    /* 2、初始化sentinal哨兵功能 => initSentinelConfig initSentinel
+     * We need to init sentinel right now as parsing the configuration file
      * in sentinel mode will have the effect of populating the sentinel
      * data structures with master nodes to monitor. */
     if (server.sentinel_mode) {
@@ -4028,12 +4032,14 @@ int main(int argc, char **argv) {
         initSentinel();
     }
 
-    /* Check if we need to start in redis-check-rdb mode. We just execute
+    /* 3、修复持久化文件
+     * Check if we need to start in redis-check-rdb mode. We just execute
      * the program main. However the program is part of the Redis executable
      * so that we can easily execute an RDB check on loading errors. */
     if (strstr(argv[0],"redis-check-rdb") != NULL)
         redis_check_rdb_main(argc,argv);
 
+    /* 4、解析命令行、载入配置文件 */
     if (argc >= 2) {
         j = 1; /* First option to parse in argv[] */
         sds options = sdsempty();
@@ -4095,23 +4101,26 @@ int main(int argc, char **argv) {
                 "Sentinel needs config file on disk to save state.  Exiting...");
             exit(1);
         }
-        resetServerSaveParams();
-        loadServerConfig(configfile,options);
+        resetServerSaveParams();  // 重置rdb的checkpoint位置
+        loadServerConfig(configfile,options);  // 加载服务器配置文件redis.conf和命令行参数指定的配置项
         sdsfree(options);
     } else {
         serverLog(LL_WARNING, "Warning: no config file specified, using the default config. In order to specify a config file use %s /path/to/%s.conf", argv[0], server.sentinel_mode ? "sentinel" : "redis");
     }
 
+    /* 5、以守护进程运行 */
     server.supervised = redisIsSupervised(server.supervised_mode);
     int background = server.daemonize && !server.supervised;
     if (background) daemonize();
 
+    /* 6、初始化收尾工作，包括信号量处理 todo 等 */
     initServer();
     if (background || server.pidfile) createPidFile();
     redisSetProcTitle(argv[0]);
     redisAsciiArt();
     checkTcpBacklogSettings();
 
+    /* 6、读取并加载持久化文件到内存 */
     if (!server.sentinel_mode) {
         /* Things not needed when running in Sentinel mode. */
         serverLog(LL_WARNING,"Server started, Redis version " REDIS_VERSION);
