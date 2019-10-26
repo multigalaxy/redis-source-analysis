@@ -1,4 +1,8 @@
 /*
+ * redis数据类型：哈希对象，键叫哈希键
+ * 底层数据结构是压缩列表或哈希表
+ * 底层编码对应的是ziplist或hashtable
+ *
  * Copyright (c) 2009-2012, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *

@@ -1,4 +1,8 @@
 /*
+ * redis数据类型：集合对象，键叫集合键
+ * 底层数据结构有整数集合、哈希表
+ * 底层编码对应有intset、hashtable
+ *
  * Copyright (c) 2009-2012, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *

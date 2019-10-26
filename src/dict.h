@@ -1,4 +1,8 @@
 /*
+ * 数据结构：字典
+ * 字典使用哈希表作为底层实现，一个哈希表有多个哈希结点，一个节点保存一个键值对
+ * 字典使用在表示数据库、哈希键等
+ *
  * Hash Tables Implementation.
  *
  * This file implements in-memory hash tables with insert/del/replace/find/
@@ -33,7 +37,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/* 哈希表实现，字典使用哈希表作为底层实现，一个哈希表有多个哈希结点，一个节点保存一个键值对 */
 #include <stdint.h>
 
 #ifndef __DICT_H

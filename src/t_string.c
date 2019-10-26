@@ -1,4 +1,17 @@
 /*
+ * redis数据类型：字符串对象，键叫字符串键
+ * 底层数据结构有整数、字符串
+ * 其底层编码对应的是int、raw或embstr
+ * 对象 = redisObject + int | sds结构
+ *
+ * raw或embstr的选择在于可存最小长度，在64位系统里，jemalloc分配内存超过64字节就是大串，所以长度计算方式如下：
+ * 64 = redisObject(16=4+4+8) + sdshdr8(3) + 结束符(1) + 长度（？）
+ * 计算长度为44字节，<=44用embstr，>44用raw
+ *
+ * 3.0以前的计算方式：
+ * 64 = redisObject(16=4+4+8) + sds(8) + 结束符(1) + 长度（？）
+ * 计算长度为39
+ *
  * Copyright (c) 2009-2012, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *

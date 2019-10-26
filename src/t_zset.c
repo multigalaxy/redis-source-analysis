@@ -1,4 +1,8 @@
 /*
+ * redis数据类型：有序集合对象，键叫有序集合键
+ * 底层数据结构是压缩列表或跳跃表
+ * 对应底层编码是ziplist或skiplist
+ *
  * Copyright (c) 2009-2012, Salvatore Sanfilippo <antirez at gmail dot com>
  * Copyright (c) 2009-2012, Pieter Noordhuis <pcnoordhuis at gmail dot com>
  * All rights reserved.
