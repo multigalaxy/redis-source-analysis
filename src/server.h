@@ -171,7 +171,7 @@ typedef long long mstime_t; /* millisecond time type. */
 /* 哈希表最小填充量，即超过此值就可以考虑rehash调整到能包含所有键值对的最小值 Hash table parameters */
 #define HASHTABLE_MIN_FILL        10      /* Minimal hash table fill 10% */
 
-/* Command flags. Please check the command table defined in the redis.c file
+/* 命令执行类型标记Command flags. Please check the command table defined in the redis.c file
  * for more information about the meaning of every flag. */
 #define CMD_WRITE 1                   /* "w" flag */
 #define CMD_READONLY 2                /* "r" flag */
@@ -188,7 +188,7 @@ typedef long long mstime_t; /* millisecond time type. */
 #define CMD_ASKING 4096               /* "k" flag */
 #define CMD_FAST 8192                 /* "F" flag */
 
-/* redis对象类型，共5种，字符串、列表、集合、有序集合和哈希字典
+/* redis对象类型，共5种，字符串、列表、集合、有序集合和哈希字典，这5种都需要robj包装
  * Object types */
 #define OBJ_STRING 0
 #define OBJ_LIST 1
