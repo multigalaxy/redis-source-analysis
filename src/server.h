@@ -168,7 +168,7 @@ typedef long long mstime_t; /* millisecond time type. */
  * in order to make sure of not over provisioning more than 128 fds. */
 #define CONFIG_FDSET_INCR (CONFIG_MIN_RESERVED_FDS+96)
 
-/* 哈希表最小填充量，即超过此值就可以考虑rehash调整到能包含所有键值对的最小值 Hash table parameters */
+/* 哈希表最小填充量，即当已使用比例低于此值就可以考虑rehash缩容到能包含所有键值对的最小值，最小为4 Hash table parameters */
 #define HASHTABLE_MIN_FILL        10      /* Minimal hash table fill 10% */
 
 /* 命令执行类型标记Command flags. Please check the command table defined in the redis.c file
@@ -726,8 +726,8 @@ struct redisServer {
     char **exec_argv;           /* Executable argv vector (copy). */
     int hz;                     /* serverCron() calls frequency in hertz */
     redisDb *db;
-    dict *commands;             /* Command table */
-    dict *orig_commands;        /* Command table before command renaming. */
+    dict *commands;             /* 服务器支持的命令表 Command table */
+    dict *orig_commands;        /* 服务器支持的原始命令表，防止redis.conf修改命令，可以跟*commands中的做映射 Command table before command renaming. */
     aeEventLoop *el;
     unsigned lruclock:LRU_BITS; /* Clock for LRU eviction */
     int shutdown_asap;          /* SHUTDOWN needed ASAP */
@@ -1003,6 +1003,7 @@ typedef struct pubsubPattern {
     robj *pattern;
 } pubsubPattern;
 
+/* redis命令结构体 */
 typedef void redisCommandProc(client *c);
 typedef int *redisGetKeysProc(struct redisCommand *cmd, robj **argv, int argc, int *numkeys);
 struct redisCommand {
