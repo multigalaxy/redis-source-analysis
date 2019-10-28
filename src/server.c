@@ -4113,7 +4113,7 @@ int main(int argc, char **argv) {
     int background = server.daemonize && !server.supervised;
     if (background) daemonize();
 
-    /* 6、初始化收尾工作，包括信号量处理 todo 等 */
+    /* 6、初始化收尾工作，包括信号量处理 fixme 等 */
     initServer();
     if (background || server.pidfile) createPidFile();
     redisSetProcTitle(argv[0]);
