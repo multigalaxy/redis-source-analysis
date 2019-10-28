@@ -469,7 +469,7 @@ typedef struct redisObject {
     unsigned encoding:4;  // 4位
     unsigned lru:LRU_BITS; /* 24位 lru time (relative to server.lruclock) */
     int refcount;  // 32位
-    void *ptr;  // 64位 存放值的指针
+    void *ptr;  // 64位 指向值的指针
 } robj;  // 16个字节
 
 /* Macro used to obtain the current LRU clock.
@@ -556,7 +556,9 @@ typedef struct blockingState {
     long long reploffset;   /* Replication offset to reach. */
 } blockingState;
 
-/* The following structure represents a node in the server.ready_keys list,
+/*
+ * 记录下所有客户端因等待而阻塞的keys
+ * The following structure represents a node in the server.ready_keys list,
  * where we accumulate all the keys that had clients blocked with a blocking
  * operation such as B[LR]POP, but received new data in the context of the
  * last executed command.
@@ -651,7 +653,7 @@ struct sharedObjectsStruct {
 
 /* 跳跃表结点的结构体 ZSETs use a specialized version of Skiplists */
 typedef struct zskiplistNode {
-    robj *obj;  // = redis对象 = member = 成员对象，存结点数据
+    robj *obj;  // redis成员对象
     double score;  // 浮点，存分值，分值可相同，相同的按obj的字典顺序排列
     struct zskiplistNode *backward;  // 后退指针
     struct zskiplistLevel {  // 跳跃表层级结构体
@@ -662,9 +664,9 @@ typedef struct zskiplistNode {
 
 /* 跳跃表结构体 */
 typedef struct zskiplist {
-    struct zskiplistNode *header, *tail;  // 表头和表尾结点
+    struct zskiplistNode *header, *tail;  // 指向表头和表尾结点
     unsigned long length;  // 结点数量
-    int level;  // 最大层数
+    int level;  // 除了头结点外的最大层数
 } zskiplist;
 
 /* 有序集合结构体，包含一个字典，一个跳跃表*/
@@ -682,7 +684,8 @@ typedef struct clientBufferLimitsConfig {
 
 extern clientBufferLimitsConfig clientBufferLimitsDefaults[CLIENT_TYPE_OBUF_COUNT];
 
-/* The redisOp structure defines a Redis Operation, that is an instance of
+/*
+ * The redisOp structure defines a Redis Operation, that is an instance of
  * a command with an argument vector, database ID, propagation target
  * (PROPAGATE_*), and command pointer.
  *
@@ -1080,6 +1083,7 @@ typedef struct {
 #define OBJ_HASH_VALUE 2
 
 /*-----------------------------------------------------------------------------
+ * 一些外部可公用的数据结构，包括server全局配置、可共享变量、集合类型的字典结构、有序集合类型的字典结构、集群配置、数据库的字典结构、哈希类型的字典结构等。
  * Extern declarations
  *----------------------------------------------------------------------------*/
 
@@ -1190,7 +1194,8 @@ void handleClientsBlockedOnLists(void);
 void popGenericCommand(client *c, int where);
 void signalListAsReady(redisDb *db, robj *key);
 
-/* MULTI/EXEC/WATCH... */
+/* 事务操作的原型函数
+ * MULTI/EXEC/WATCH... */
 void unwatchAllKeys(client *c);
 void initClientMultiState(client *c);
 void freeClientMultiState(client *c);
@@ -1201,7 +1206,8 @@ void discardTransaction(client *c);
 void flagTransaction(client *c);
 void execCommandPropagateMulti(client *c);
 
-/* Redis object implementation */
+/* 一些操作redis对象的函数
+ * Redis object implementation */
 void decrRefCount(robj *o);
 void decrRefCountVoid(void *o);
 void incrRefCount(robj *o);
@@ -1243,12 +1249,14 @@ int equalStringObjects(robj *a, robj *b);
 unsigned long long estimateObjectIdleTime(robj *o);
 #define sdsEncodedObject(objptr) (objptr->encoding == OBJ_ENCODING_RAW || objptr->encoding == OBJ_ENCODING_EMBSTR)
 
-/* Synchronous I/O with timeout */
+/* 同步操作指定描述符的一些操作，同步写入、同步读取、同步读取一行等
+ * Synchronous I/O with timeout */
 ssize_t syncWrite(int fd, char *ptr, ssize_t size, long long timeout);
 ssize_t syncRead(int fd, char *ptr, ssize_t size, long long timeout);
 ssize_t syncReadLine(int fd, char *ptr, ssize_t size, long long timeout);
 
-/* Replication */
+/* 主从复制操作
+ * Replication */
 void replicationFeedSlaves(list *slaves, int dictid, robj **argv, int argc);
 void replicationFeedMonitors(client *c, list *monitors, int dictid, robj **argv, int argc);
 void updateSlavesWaitingBgsave(int bgsaveerr, int type);
@@ -1272,15 +1280,19 @@ char *replicationGetSlaveName(client *c);
 long long getPsyncInitialOffset(void);
 int replicationSetupSlaveForFullResync(client *slave, long long offset);
 
-/* Generic persistence functions */
+/*
+ * 通用的持久化函数
+ * Generic persistence functions */
 void startLoading(FILE *fp);
 void loadingProgress(off_t pos);
 void stopLoading(void);
 
-/* RDB persistence */
+/* rdb持久化方式
+ * RDB persistence */
 #include "rdb.h"
 
-/* AOF persistence */
+/* aof持久化方式
+ * AOF persistence */
 void flushAppendOnlyFile(int force);
 void feedAppendOnlyFile(struct redisCommand *cmd, int dictid, robj **argv, int argc);
 void aofRemoveTempFile(pid_t childpid);
@@ -1292,7 +1304,8 @@ void backgroundRewriteDoneHandler(int exitcode, int bysignal);
 void aofRewriteBufferReset(void);
 unsigned long aofRewriteBufferSize(void);
 
-/* Sorted sets data type */
+/* 下面是有序集合的一些数据结构定义和操作
+ * Sorted sets data type */
 
 /* Struct to hold a inclusive/exclusive range spec by score comparison. */
 typedef struct {
