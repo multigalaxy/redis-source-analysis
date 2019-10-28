@@ -155,7 +155,7 @@ CMAKE_PROJECT_DESCRIPTION:STATIC=
 CMAKE_PROJECT_HOMEPAGE_URL:STATIC=
 
 //Value Computed by CMake
-CMAKE_PROJECT_NAME:STATIC=redis_3_2_12
+CMAKE_PROJECT_NAME:STATIC=redis_source_analysis
 
 //Path to a program.
 CMAKE_RANLIB:FILEPATH=/Library/Developer/CommandLineTools/usr/bin/ranlib
@@ -230,6 +230,12 @@ redis_3_2_12_BINARY_DIR:STATIC=/Users/didi/workspace/cpp/redis-source-analysis/c
 
 //Value Computed by CMake
 redis_3_2_12_SOURCE_DIR:STATIC=/Users/didi/workspace/cpp/redis-source-analysis
+
+//Value Computed by CMake
+redis_source_analysis_BINARY_DIR:STATIC=/Users/didi/workspace/cpp/redis-source-analysis/cmake-build-debug
+
+//Value Computed by CMake
+redis_source_analysis_SOURCE_DIR:STATIC=/Users/didi/workspace/cpp/redis-source-analysis
 
 
 ########################

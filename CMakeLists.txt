@@ -1,5 +1,5 @@
-# cmake_minimum_required(VERSION <specify CMake version here>)
-project(redis_3_2_12)
+cmake_minimum_required(VERSION 3.14)
+project(redis_source_analysis)
 
 set(CMAKE_CXX_STANDARD 14)
 
@@ -7,6 +7,7 @@ include_directories(deps/geohash-int)
 include_directories(deps/hiredis)
 include_directories(deps/hiredis/adapters)
 include_directories(deps/jemalloc/include)
+include_directories(deps/jemalloc/include/jemalloc)
 include_directories(deps/jemalloc/include/jemalloc/internal)
 include_directories(deps/jemalloc/include/msvc_compat)
 include_directories(deps/jemalloc/include/msvc_compat/C99)
@@ -17,12 +18,11 @@ include_directories(deps/lua/etc)
 include_directories(deps/lua/src)
 include_directories(src)
 
-add_executable(redis_3_2_12
+add_executable(redis_source_analysis
         deps/geohash-int/geohash.c
         deps/geohash-int/geohash.h
         deps/geohash-int/geohash_helper.c
         deps/geohash-int/geohash_helper.h
-        deps/geohash-int/Makefile
         deps/hiredis/adapters/ae.h
         deps/hiredis/adapters/libev.h
         deps/hiredis/adapters/libevent.h
@@ -32,35 +32,20 @@ add_executable(redis_3_2_12
         deps/hiredis/examples/example-libevent.c
         deps/hiredis/examples/example-libuv.c
         deps/hiredis/examples/example.c
-        deps/hiredis/.gitignore
-        deps/hiredis/.travis.yml
         deps/hiredis/async.c
         deps/hiredis/async.h
-        deps/hiredis/CHANGELOG.md
-        deps/hiredis/COPYING
         deps/hiredis/dict.c
         deps/hiredis/dict.h
         deps/hiredis/fmacros.h
         deps/hiredis/hiredis.c
         deps/hiredis/hiredis.h
-        deps/hiredis/Makefile
         deps/hiredis/net.c
         deps/hiredis/net.h
-        deps/hiredis/README.md
         deps/hiredis/sds.c
         deps/hiredis/sds.h
         deps/hiredis/sdsalloc.h
         deps/hiredis/test.c
         deps/hiredis/zmalloc.h
-        deps/jemalloc/bin/jemalloc-config.in
-        deps/jemalloc/bin/jemalloc.sh.in
-        deps/jemalloc/bin/jeprof.in
-        deps/jemalloc/doc/html.xsl.in
-        deps/jemalloc/doc/jemalloc.3
-        deps/jemalloc/doc/jemalloc.html
-        deps/jemalloc/doc/jemalloc.xml.in
-        deps/jemalloc/doc/manpages.xsl.in
-        deps/jemalloc/doc/stylesheet.xsl
         deps/jemalloc/include/jemalloc/internal/arena.h
         deps/jemalloc/include/jemalloc/internal/atomic.h
         deps/jemalloc/include/jemalloc/internal/base.h
@@ -73,38 +58,23 @@ add_executable(redis_3_2_12
         deps/jemalloc/include/jemalloc/internal/extent.h
         deps/jemalloc/include/jemalloc/internal/hash.h
         deps/jemalloc/include/jemalloc/internal/huge.h
-        deps/jemalloc/include/jemalloc/internal/jemalloc_internal.h.in
         deps/jemalloc/include/jemalloc/internal/jemalloc_internal_decls.h
-        deps/jemalloc/include/jemalloc/internal/jemalloc_internal_defs.h.in
         deps/jemalloc/include/jemalloc/internal/jemalloc_internal_macros.h
         deps/jemalloc/include/jemalloc/internal/mb.h
         deps/jemalloc/include/jemalloc/internal/mutex.h
         deps/jemalloc/include/jemalloc/internal/pages.h
-        deps/jemalloc/include/jemalloc/internal/private_namespace.sh
-        deps/jemalloc/include/jemalloc/internal/private_symbols.txt
-        deps/jemalloc/include/jemalloc/internal/private_unnamespace.sh
         deps/jemalloc/include/jemalloc/internal/prng.h
         deps/jemalloc/include/jemalloc/internal/prof.h
-        deps/jemalloc/include/jemalloc/internal/public_namespace.sh
-        deps/jemalloc/include/jemalloc/internal/public_unnamespace.sh
         deps/jemalloc/include/jemalloc/internal/ql.h
         deps/jemalloc/include/jemalloc/internal/qr.h
         deps/jemalloc/include/jemalloc/internal/quarantine.h
         deps/jemalloc/include/jemalloc/internal/rb.h
         deps/jemalloc/include/jemalloc/internal/rtree.h
-        deps/jemalloc/include/jemalloc/internal/size_classes.sh
         deps/jemalloc/include/jemalloc/internal/stats.h
         deps/jemalloc/include/jemalloc/internal/tcache.h
         deps/jemalloc/include/jemalloc/internal/tsd.h
         deps/jemalloc/include/jemalloc/internal/util.h
         deps/jemalloc/include/jemalloc/internal/valgrind.h
-        deps/jemalloc/include/jemalloc/jemalloc.sh
-        deps/jemalloc/include/jemalloc/jemalloc_defs.h.in
-        deps/jemalloc/include/jemalloc/jemalloc_macros.h.in
-        deps/jemalloc/include/jemalloc/jemalloc_mangle.sh
-        deps/jemalloc/include/jemalloc/jemalloc_protos.h.in
-        deps/jemalloc/include/jemalloc/jemalloc_rename.sh
-        deps/jemalloc/include/jemalloc/jemalloc_typedefs.h.in
         deps/jemalloc/include/msvc_compat/C99/stdbool.h
         deps/jemalloc/include/msvc_compat/C99/stdint.h
         deps/jemalloc/include/msvc_compat/strings.h
@@ -135,8 +105,6 @@ add_executable(redis_3_2_12
         deps/jemalloc/src/valgrind.c
         deps/jemalloc/src/zone.c
         deps/jemalloc/test/include/test/btalloc.h
-        deps/jemalloc/test/include/test/jemalloc_test.h.in
-        deps/jemalloc/test/include/test/jemalloc_test_defs.h.in
         deps/jemalloc/test/include/test/math.h
         deps/jemalloc/test/include/test/mq.h
         deps/jemalloc/test/include/test/mtx.h
@@ -209,52 +177,13 @@ add_executable(redis_3_2_12
         deps/jemalloc/test/unit/tsd.c
         deps/jemalloc/test/unit/util.c
         deps/jemalloc/test/unit/zero.c
-        deps/jemalloc/test/test.sh.in
-        deps/jemalloc/.autom4te.cfg
-        deps/jemalloc/.gitattributes
-        deps/jemalloc/.gitignore
-        deps/jemalloc/autogen.sh
-        deps/jemalloc/ChangeLog
-        deps/jemalloc/config.guess
-        deps/jemalloc/config.stamp.in
-        deps/jemalloc/config.sub
-        deps/jemalloc/configure
-        deps/jemalloc/configure.ac
-        deps/jemalloc/COPYING
-        deps/jemalloc/coverage.sh
-        deps/jemalloc/INSTALL
-        deps/jemalloc/install-sh
-        deps/jemalloc/jemalloc.pc.in
-        deps/jemalloc/Makefile.in
-        deps/jemalloc/README
-        deps/jemalloc/VERSION
-        deps/linenoise/.gitignore
         deps/linenoise/example.c
         deps/linenoise/linenoise.c
         deps/linenoise/linenoise.h
-        deps/linenoise/Makefile
-        deps/linenoise/README.markdown
-        deps/lua/doc/contents.html
-        deps/lua/doc/cover.png
-        deps/lua/doc/logo.gif
-        deps/lua/doc/lua.1
-        deps/lua/doc/lua.css
-        deps/lua/doc/lua.html
-        deps/lua/doc/luac.1
-        deps/lua/doc/luac.html
-        deps/lua/doc/manual.css
-        deps/lua/doc/manual.html
-        deps/lua/doc/readme.html
         deps/lua/etc/all.c
         deps/lua/etc/lua.hpp
-        deps/lua/etc/lua.ico
-        deps/lua/etc/lua.pc
-        deps/lua/etc/luavs.bat
-        deps/lua/etc/Makefile
         deps/lua/etc/min.c
         deps/lua/etc/noparser.c
-        deps/lua/etc/README
-        deps/lua/etc/strict.lua
         deps/lua/src/fpconv.c
         deps/lua/src/fpconv.h
         deps/lua/src/lapi.c
@@ -315,39 +244,9 @@ add_executable(redis_3_2_12
         deps/lua/src/lvm.h
         deps/lua/src/lzio.c
         deps/lua/src/lzio.h
-        deps/lua/src/Makefile
         deps/lua/src/print.c
         deps/lua/src/strbuf.c
         deps/lua/src/strbuf.h
-        deps/lua/test/bisect.lua
-        deps/lua/test/cf.lua
-        deps/lua/test/echo.lua
-        deps/lua/test/env.lua
-        deps/lua/test/factorial.lua
-        deps/lua/test/fib.lua
-        deps/lua/test/fibfor.lua
-        deps/lua/test/globals.lua
-        deps/lua/test/hello.lua
-        deps/lua/test/life.lua
-        deps/lua/test/luac.lua
-        deps/lua/test/printf.lua
-        deps/lua/test/README
-        deps/lua/test/readonly.lua
-        deps/lua/test/sieve.lua
-        deps/lua/test/sort.lua
-        deps/lua/test/table.lua
-        deps/lua/test/trace-calls.lua
-        deps/lua/test/trace-globals.lua
-        deps/lua/test/xd.lua
-        deps/lua/COPYRIGHT
-        deps/lua/HISTORY
-        deps/lua/INSTALL
-        deps/lua/Makefile
-        deps/lua/README
-        deps/Makefile
-        deps/README.md
-        deps/update-jemalloc.sh
-        src/.gitignore
         src/adlist.c
         src/adlist.h
         src/ae.c
@@ -391,10 +290,7 @@ add_executable(redis_3_2_12
         src/lzf_c.c
         src/lzf_d.c
         src/lzfP.h
-        src/Makefile
-        src/Makefile.dep
         src/memtest.c
-        src/mkreleasehdr.sh
         src/multi.c
         src/networking.c
         src/notify.c
@@ -412,7 +308,6 @@ add_executable(redis_3_2_12
         src/redis-check-aof.c
         src/redis-check-rdb.c
         src/redis-cli.c
-        src/redis-trib.rb
         src/redisassert.h
         src/release.c
         src/replication.c
@@ -443,7 +338,6 @@ add_executable(redis_3_2_12
         src/testhelp.h
         src/util.c
         src/util.h
-        src/valgrind.sup
         src/version.h
         src/ziplist.c
         src/ziplist.h
@@ -451,131 +345,6 @@ add_executable(redis_3_2_12
         src/zipmap.h
         src/zmalloc.c
         src/zmalloc.h
-        tests/assets/default.conf
-        tests/assets/encodings.rdb
-        tests/assets/hash-zipmap.rdb
-        tests/cluster/tests/helpers/onlydots.tcl
-        tests/cluster/tests/includes/init-tests.tcl
-        tests/cluster/tests/00-base.tcl
-        tests/cluster/tests/01-faildet.tcl
-        tests/cluster/tests/02-failover.tcl
-        tests/cluster/tests/03-failover-loop.tcl
-        tests/cluster/tests/04-resharding.tcl
-        tests/cluster/tests/05-slave-selection.tcl
-        tests/cluster/tests/06-slave-stop-cond.tcl
-        tests/cluster/tests/07-replica-migration.tcl
-        tests/cluster/tests/08-update-msg.tcl
-        tests/cluster/tests/09-pubsub.tcl
-        tests/cluster/tests/10-manual-failover.tcl
-        tests/cluster/tests/11-manual-takeover.tcl
-        tests/cluster/tests/12-replica-migration-2.tcl
-        tests/cluster/tmp/.gitignore
-        tests/cluster/cluster.tcl
-        tests/cluster/run.tcl
-        tests/helpers/bg_complex_data.tcl
-        tests/helpers/gen_write_load.tcl
-        tests/integration/aof-race.tcl
-        tests/integration/aof.tcl
-        tests/integration/convert-zipmap-hash-on-load.tcl
-        tests/integration/logging.tcl
-        tests/integration/rdb.tcl
-        tests/integration/redis-cli.tcl
-        tests/integration/replication-2.tcl
-        tests/integration/replication-3.tcl
-        tests/integration/replication-4.tcl
-        tests/integration/replication-psync.tcl
-        tests/integration/replication.tcl
-        tests/sentinel/tests/includes/init-tests.tcl
-        tests/sentinel/tests/00-base.tcl
-        tests/sentinel/tests/01-conf-update.tcl
-        tests/sentinel/tests/02-slaves-reconf.tcl
-        tests/sentinel/tests/03-runtime-reconf.tcl
-        tests/sentinel/tests/04-slave-selection.tcl
-        tests/sentinel/tests/05-manual.tcl
-        tests/sentinel/tests/06-ckquorum.tcl
-        tests/sentinel/tests/07-down-conditions.tcl
-        tests/sentinel/tmp/.gitignore
-        tests/sentinel/run.tcl
-        tests/support/cluster.tcl
-        tests/support/redis.tcl
-        tests/support/server.tcl
-        tests/support/test.tcl
-        tests/support/tmpfile.tcl
-        tests/support/util.tcl
-        tests/tmp/.gitignore
-        tests/unit/type/hash.tcl
-        tests/unit/type/incr.tcl
-        tests/unit/type/list-2.tcl
-        tests/unit/type/list-3.tcl
-        tests/unit/type/list-common.tcl
-        tests/unit/type/list.tcl
-        tests/unit/type/set.tcl
-        tests/unit/type/string.tcl
-        tests/unit/type/zset.tcl
-        tests/unit/aofrw.tcl
-        tests/unit/auth.tcl
-        tests/unit/bitfield.tcl
-        tests/unit/bitops.tcl
-        tests/unit/dump.tcl
-        tests/unit/expire.tcl
-        tests/unit/geo.tcl
-        tests/unit/hyperloglog.tcl
-        tests/unit/introspection-2.tcl
-        tests/unit/introspection.tcl
-        tests/unit/keyspace.tcl
-        tests/unit/latency-monitor.tcl
-        tests/unit/limits.tcl
-        tests/unit/maxmemory.tcl
-        tests/unit/memefficiency.tcl
-        tests/unit/multi.tcl
-        tests/unit/obuf-limits.tcl
-        tests/unit/other.tcl
-        tests/unit/printver.tcl
-        tests/unit/protocol.tcl
-        tests/unit/pubsub.tcl
-        tests/unit/quit.tcl
-        tests/unit/scan.tcl
-        tests/unit/scripting.tcl
-        tests/unit/slowlog.tcl
-        tests/unit/sort.tcl
-        tests/instances.tcl
-        tests/test_helper.tcl
-        utils/create-cluster/.gitignore
-        utils/create-cluster/create-cluster
-        utils/create-cluster/README
-        utils/hashtable/README
         utils/hashtable/rehashing.c
-        utils/hyperloglog/.gitignore
-        utils/hyperloglog/hll-err.rb
-        utils/hyperloglog/hll-gnuplot-graph.rb
-        utils/lru/README
-        utils/lru/test-lru.rb
-        utils/releasetools/01_create_tarball.sh
-        utils/releasetools/02_upload_tarball.sh
-        utils/releasetools/03_test_release.sh
-        utils/releasetools/04_release_hash.sh
-        utils/build-static-symbols.tcl
-        utils/cluster_fail_time.tcl
         utils/corrupt_rdb.c
-        utils/generate-command-help.rb
-        utils/install_server.sh
-        utils/redis-copy.rb
-        utils/redis-sha1.rb
-        utils/redis_init_script
-        utils/redis_init_script.tpl
-        utils/speed-regression.tcl
-        utils/whatisdoing.sh
-        .gitignore
-        00-RELEASENOTES
-        BUGS
-        CONTRIBUTING
-        COPYING
-        INSTALL
-        Makefile
-        MANIFESTO
-        README.md
-        redis.conf
-        runtest
-        runtest-cluster
-        runtest-sentinel
-        sentinel.conf)
+        main_test.c)
