@@ -4120,7 +4120,7 @@ int main(int argc, char **argv) {
     redisAsciiArt();
     checkTcpBacklogSettings();
 
-    /* 6、读取并加载持久化文件到内存 */
+    /* 7、读取并加载持久化文件到内存 */
     if (!server.sentinel_mode) {
         /* Things not needed when running in Sentinel mode. */
         serverLog(LL_WARNING,"Server started, Redis version " REDIS_VERSION);
