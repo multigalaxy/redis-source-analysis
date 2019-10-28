@@ -1287,11 +1287,11 @@ void startLoading(FILE *fp);
 void loadingProgress(off_t pos);
 void stopLoading(void);
 
-/* rdb持久化方式
+/* 加载rdb持久化相关操作函数
  * RDB persistence */
 #include "rdb.h"
 
-/* aof持久化方式
+/* aof持久化相关操作函数，在aof.c里实现
  * AOF persistence */
 void flushAppendOnlyFile(int force);
 void feedAppendOnlyFile(struct redisCommand *cmd, int dictid, robj **argv, int argc);
@@ -1429,7 +1429,7 @@ struct rewriteConfigState; /* Forward declaration to export API. */
 void rewriteConfigRewriteLine(struct rewriteConfigState *state, const char *option, sds line, int force);
 int rewriteConfig(char *path);
 
-/* db.c -- Keyspace access API */
+/* 访问数据库的api db.c -- Keyspace access API */
 int removeExpire(redisDb *db, robj *key);
 void propagateExpire(redisDb *db, robj *key);
 int expireIfNeeded(redisDb *db, robj *key);
@@ -1470,7 +1470,7 @@ int *sortGetKeys(struct redisCommand *cmd, robj **argv, int argc, int *numkeys);
 int *migrateGetKeys(struct redisCommand *cmd, robj **argv, int argc, int *numkeys);
 int *georadiusGetKeys(struct redisCommand *cmd, robj **argv, int argc, int *numkeys);
 
-/* Cluster */
+/* 集群操作函数 Cluster */
 void clusterInit(void);
 unsigned short crc16(const char *buf, int len);
 unsigned int keyHashSlot(char *key, int keylen);
@@ -1479,14 +1479,14 @@ void clusterPropagatePublish(robj *channel, robj *message);
 void migrateCloseTimedoutSockets(void);
 void clusterBeforeSleep(void);
 
-/* Sentinel */
+/* 哨兵操作函数 Sentinel */
 void initSentinelConfig(void);
 void initSentinel(void);
 void sentinelTimer(void);
 char *sentinelHandleConfiguration(char **argv, int argc);
 void sentinelIsRunning(void);
 
-/* redis-check-rdb */
+/* 检查rdb持久化文件，将生成工具redis-check-rdb。rdb=redis database，用子进程生成快照，所以可能会有遗漏数据 */
 int redis_check_rdb(char *rdbfilename);
 int redis_check_rdb_main(int argc, char **argv);
 
@@ -1509,7 +1509,7 @@ char *redisGitSHA1(void);
 char *redisGitDirty(void);
 uint64_t redisBuildId(void);
 
-/* Commands prototypes */
+/* 执行不同命令的所有原型函数 Commands prototypes */
 void authCommand(client *c);
 void pingCommand(client *c);
 void echoCommand(client *c);
@@ -1690,7 +1690,7 @@ void *malloc(size_t size) __attribute__ ((deprecated));
 void *realloc(void *ptr, size_t size) __attribute__ ((deprecated));
 #endif
 
-/* Debugging stuff */
+/* 调试函数 Debugging stuff */
 void _serverAssertWithInfo(client *c, robj *o, char *estr, char *file, int line);
 void _serverAssert(char *estr, char *file, int line);
 void _serverPanic(char *msg, char *file, int line);
