@@ -74,7 +74,7 @@ typedef long long mstime_t; /* millisecond time type. */
 #define C_OK                    0
 #define C_ERR                   -1
 
-/* 静态变量配置 Static server configuration */
+/* 基本静态变量配置 Static server configuration */
 #define CONFIG_DEFAULT_HZ        10      /* 时钟中断频率，每秒多少次 Time interrupt calls/sec. */
 #define CONFIG_MIN_HZ            1
 #define CONFIG_MAX_HZ            500  // 最大500次中断每秒
