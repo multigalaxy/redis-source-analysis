@@ -659,7 +659,7 @@ typedef struct zskiplistNode {
     struct zskiplistLevel {  // 跳跃表层级结构体
         struct zskiplistNode *forward;  // 前进指针，指向的不一定是下个连续结点
         unsigned int span;  // 跨度，两个结点之间的距离
-    } level[];  // 数组表示多层
+    } level[];  // 数组表示多层，下标从0开始表示层级从L1开始
 } zskiplistNode;
 
 /* 跳跃表结构体 */
@@ -1281,7 +1281,7 @@ long long getPsyncInitialOffset(void);
 int replicationSetupSlaveForFullResync(client *slave, long long offset);
 
 /*
- * 通用的持久化函数
+ * 持久化函数统一入口
  * Generic persistence functions */
 void startLoading(FILE *fp);
 void loadingProgress(off_t pos);
@@ -1307,23 +1307,26 @@ unsigned long aofRewriteBufferSize(void);
 /* 下面是有序集合的一些数据结构定义和操作
  * Sorted sets data type */
 
-/* Struct to hold a inclusive/exclusive range spec by score comparison. */
+/* 设置有序集合执行zrangeByScore时给定的分值范围
+ * Struct to hold a inclusive/exclusive range spec by score comparison. */
 typedef struct {
     double min, max;
-    int minex, maxex; /* are min or max exclusive? */
+    int minex, maxex; /* 是否包含等号 are min or max exclusive? */
 } zrangespec;
 
-/* Struct to hold an inclusive/exclusive range spec by lexicographic comparison. */
+/* 设置有序集合执行zrange*时给定的词典顺序范围，在比较分值相同时就会使用此顺序比较
+ * Struct to hold an inclusive/exclusive range spec by lexicographic comparison. */
 typedef struct {
     robj *min, *max;  /* May be set to shared.(minstring|maxstring) */
-    int minex, maxex; /* are min or max exclusive? */
+    int minex, maxex; /* 是否包含等号 are min or max exclusive? */
 } zlexrangespec;
 
-zskiplist *zslCreate(void);
-void zslFree(zskiplist *zsl);
-zskiplistNode *zslInsert(zskiplist *zsl, double score, robj *obj);
-unsigned char *zzlInsert(unsigned char *zl, robj *ele, double score);
-int zslDelete(zskiplist *zsl, double score, robj *obj);
+/* 有序集合操作函数 */
+zskiplist *zslCreate(void);  // 创建跳跃表
+void zslFree(zskiplist *zsl);  // 释放跳跃表内存
+zskiplistNode *zslInsert(zskiplist *zsl, double score, robj *obj);  // 跳跃表插入member和score
+unsigned char *zzlInsert(unsigned char *zl, robj *ele, double score);  // 压缩表插入member和score
+int zslDelete(zskiplist *zsl, double score, robj *obj);  // 跳跃表删除
 zskiplistNode *zslFirstInRange(zskiplist *zsl, zrangespec *range);
 zskiplistNode *zslLastInRange(zskiplist *zsl, zrangespec *range);
 double zzlGetScore(unsigned char *sptr);
