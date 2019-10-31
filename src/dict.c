@@ -108,7 +108,7 @@ unsigned int dictGenHashFunction(const void *key, int len) {
      They're not really 'magic', they just happen to work well.  */
     uint32_t seed = 5381;  // 5381 实验证明是重复次数相对少的值
     const uint32_t m = 0x5bd1e995;  // 1540483477 = 1011011110100011110100110010101
-    const int r = 24;  // k的右移位数
+    const int r = 24;  // k的右移位数 3个字节的二进制长度
 
     /* 初始化指定长度的哈希值 Initialize the hash to a 'random' value */
     uint32_t h = seed ^ len; // 5378 异或运算
