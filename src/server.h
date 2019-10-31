@@ -1327,10 +1327,10 @@ void zslFree(zskiplist *zsl);  // 释放跳跃表内存
 zskiplistNode *zslInsert(zskiplist *zsl, double score, robj *obj);  // 跳跃表插入member和score
 unsigned char *zzlInsert(unsigned char *zl, robj *ele, double score);  // 压缩表插入member和score
 int zslDelete(zskiplist *zsl, double score, robj *obj);  // 跳跃表删除
-zskiplistNode *zslFirstInRange(zskiplist *zsl, zrangespec *range);
-zskiplistNode *zslLastInRange(zskiplist *zsl, zrangespec *range);
-double zzlGetScore(unsigned char *sptr);
-void zzlNext(unsigned char *zl, unsigned char **eptr, unsigned char **sptr);
+zskiplistNode *zslFirstInRange(zskiplist *zsl, zrangespec *range);  // 查找跳跃表指定范围的第一个结点或null
+zskiplistNode *zslLastInRange(zskiplist *zsl, zrangespec *range);  // 查找跳跃表指定范围的最后一个结点或null
+double zzlGetScore(unsigned char *sptr);  // 获取压缩列表结点的分值
+void zzlNext(unsigned char *zl, unsigned char **eptr, unsigned char **sptr);  //
 void zzlPrev(unsigned char *zl, unsigned char **eptr, unsigned char **sptr);
 unsigned int zsetLength(robj *zobj);
 void zsetConvert(robj *zobj, int encoding);

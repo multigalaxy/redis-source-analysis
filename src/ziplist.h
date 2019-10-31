@@ -1,4 +1,7 @@
 /*
+ * 底层数据结构：压缩列表
+ * 用途：有序集合底层编码
+ *
  * Copyright (c) 2009-2012, Pieter Noordhuis <pcnoordhuis at gmail dot com>
  * Copyright (c) 2009-2012, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
@@ -34,7 +37,8 @@
 #define ZIPLIST_HEAD 0
 #define ZIPLIST_TAIL 1
 
-unsigned char *ziplistNew(void);
+/* 压缩列表api */
+unsigned char *ziplistNew(void);  // 新建压缩列表，返回字符串指针
 unsigned char *ziplistMerge(unsigned char **first, unsigned char **second);
 unsigned char *ziplistPush(unsigned char *zl, unsigned char *s, unsigned int slen, int where);
 unsigned char *ziplistIndex(unsigned char *zl, int index);

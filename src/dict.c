@@ -106,39 +106,43 @@ uint32_t dictGetHashFunctionSeed(void) {
 unsigned int dictGenHashFunction(const void *key, int len) {
     /* 'm' and 'r' are mixing constants generated offline.
      They're not really 'magic', they just happen to work well.  */
-    uint32_t seed = dict_hash_function_seed;  // 5381 实验证明是重复次数相对少的值
-    const uint32_t m = 0x5bd1e995;
-    const int r = 24;
+    uint32_t seed = 5381;  // 5381 实验证明是重复次数相对少的值
+    const uint32_t m = 0x5bd1e995;  // 1540483477 = 1011011110100011110100110010101
+    const int r = 24;  // k的右移位数
 
     /* 初始化指定长度的哈希值 Initialize the hash to a 'random' value */
-    uint32_t h = seed ^ len;
+    uint32_t h = seed ^ len; // 5378 异或运算
 
-    /* key分成n个组，每组4个字节，即一个整型大小，进行n次运算 => Mix 4 bytes at a time into the hash */
+    /* key分成/len/4个组，每组4个字节，即一个整型大小，进行len/4次运算 => Mix 4 bytes at a time into the hash */
     const unsigned char *data = (const unsigned char *)key;  // data指向了跟key同一个地址
 
     while(len >= 4) {
-        uint32_t k = *(uint32_t*)data;  // 取data即key的值，字符串按顺序取4字节转成整型（小端存储，所以是低地址存低字节，结果是字符串的前四个字节反过来就是整型值了）
+        // k = 取data当前指向的前四字节翻转过来的值。取data即key的值，字符串按顺序取4字节转成整型（小端存储，所以是低地址存低字节，结果是字符串的前四个字节反过来就是整型值了）
+        uint32_t k = *(uint32_t*)data;
 
+        // k=k与k的最高1个字节异或（向右移动24位）
         k *= m;
         k ^= k >> r;
         k *= m;
 
+        // 哈希值=当前哈希值与data处理后的值异或
         h *= m;
         h ^= k;
 
-        data += 4;  // 指针向下移4个字节，即一个整型大小
+        // data指针向下移动4个字节，即一个整型大小，然后重复计算
+        data += 4;
         len -= 4;
     }
 
-    /* 处理最后几个字节的data 
+    /* 处理最后几个字节的data
     Handle the last few bytes of the input array  */
     switch(len) {
-    case 3: h ^= data[2] << 16;
-    case 2: h ^= data[1] << 8;
-    case 1: h ^= data[0]; h *= m;
+        case 3: h ^= data[2] << 16;  // 没有break，继续往下执行
+        case 2: h ^= data[1] << 8;
+        case 1: h ^= data[0]; h *= m;
     };
 
-    /* 处理哈希值h，确保最后几个字节分配的相对离散些
+    /* 处理哈希值，确保最后几个字节分配的相对离散些
      * Do a few final mixes of the hash to ensure the last few
      * bytes are well-incorporated. */
     h ^= h >> 13;

@@ -1,4 +1,6 @@
-/* SDSLib 2.0 -- A C dynamic strings library
+/*
+ * 底层数据结构：简单动态字符串
+ * SDSLib 2.0 -- A C dynamic strings library
  *
  * Copyright (c) 2006-2015, Salvatore Sanfilippo <antirez at gmail dot com>
  * Copyright (c) 2015, Oran Agra
