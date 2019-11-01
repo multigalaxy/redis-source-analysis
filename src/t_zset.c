@@ -556,7 +556,8 @@ void zslFreeLexRange(zlexrangespec *spec) {
     decrRefCount(spec->max);
 }
 
-/* This is just a wrapper to compareStringObjects() that is able to
+/* 比较给定redis对象
+ * This is just a wrapper to compareStringObjects() that is able to
  * handle shared.minstring and shared.maxstring as the equivalent of
  * -inf and +inf for strings */
 int compareStringObjectsForLexRange(robj *a, robj *b) {
@@ -567,19 +568,21 @@ int compareStringObjectsForLexRange(robj *a, robj *b) {
     return compareStringObjects(a, b);
 }
 
+/* 比较给定跳跃表的member与指定范围的最小值 的大小关系 */
 static int zslLexValueGteMin(robj *value, zlexrangespec *spec) {
-    return spec->minex ?
+    return spec->minex ?  // 是否不包含等号
            (compareStringObjectsForLexRange(value, spec->min) > 0) :
            (compareStringObjectsForLexRange(value, spec->min) >= 0);
 }
 
+/* 比较给定跳跃表的member与指定范围的最大值 的大小关系 */
 static int zslLexValueLteMax(robj *value, zlexrangespec *spec) {
-    return spec->maxex ?
+    return spec->maxex ?  // 是否不包含等号
            (compareStringObjectsForLexRange(value, spec->max) < 0) :
            (compareStringObjectsForLexRange(value, spec->max) <= 0);
 }
 
-/* Returns if there is a part of the zset is in the lex range. */
+/* 判断跳跃表与给定的词典顺序范围是否有交集 Returns if there is a part of the zset is in the lex range. */
 int zslIsInLexRange(zskiplist *zsl, zlexrangespec *range) {
     zskiplistNode *x;
 
@@ -588,12 +591,18 @@ int zslIsInLexRange(zskiplist *zsl, zlexrangespec *range) {
         (compareStringObjects(range->min, range->max) == 0 &&
          (range->minex || range->maxex)))
         return 0;
+
+    // 尾结点作为最大值，如果小于给定范围的最小值，没交集返回0
     x = zsl->tail;
     if (x == NULL || !zslLexValueGteMin(x->obj, range))
         return 0;
+
+    // 第一个节点作为最小值，如果大于给定范围的最大值，没有交集返回0
     x = zsl->header->level[0].forward;
     if (x == NULL || !zslLexValueLteMax(x->obj, range))
         return 0;
+
+    // 否则肯定有交集，返回1
     return 1;
 }
 
@@ -1300,6 +1309,7 @@ void zaddGenericCommand(client *c, int flags) {
     /* Lookup the key and create the sorted set if does not exist. */
     zobj = lookupKeyWrite(c->db, key);
     if (zobj == NULL) {
+        // 没查到key，添加key，并设置有序集合对象的结构体
         if (xx) goto reply_to_client; /* No key + XX option: nothing to do. */
         if (server.zset_max_ziplist_entries == 0 ||
             server.zset_max_ziplist_value < sdslen(c->argv[scoreidx + 1]->ptr)) {

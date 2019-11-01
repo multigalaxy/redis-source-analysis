@@ -131,7 +131,7 @@ static int dictExpand(dict *ht, unsigned long size) {
     return DICT_OK;
 }
 
-/* Add an element to the target hash table */
+/* 哈希字典添加指定key和val Add an element to the target hash table */
 static int dictAdd(dict *ht, void *key, void *val) {
     int index;
     dictEntry *entry;

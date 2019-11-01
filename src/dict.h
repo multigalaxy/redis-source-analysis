@@ -55,10 +55,10 @@ typedef struct dictEntry {
 
     // 值=取最大长度，然后对齐到8的倍数
     union {
-        void *val;  // 8
-        uint64_t u64;  // 8 无符号长整型，【用于其他模块使用】
-        int64_t s64;  // 8【用于其他模块使用】
-        double d;  // 8【用于其他模块使用】
+        void *val;  // 8字节，此entry用来存储db的key时，val将保存存放指向key的对象指针
+        uint64_t u64;  // 8字节，用来存放cluster和sentinel的过期时间
+        int64_t s64;  // 8字节，此entry用来存储db的expire时，s64将可以存放key过期时间
+        double d;  // 8字节，有序集合做聚合运算时，存分值得聚合值
     } v;
 
     // 指向哈希表下个节点，将哈希冲突的键值对串起来，形成链表=8字节

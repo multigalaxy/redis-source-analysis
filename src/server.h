@@ -188,7 +188,7 @@ typedef long long mstime_t; /* millisecond time type. */
 #define CMD_ASKING 4096               /* "k" flag */
 #define CMD_FAST 8192                 /* "F" flag */
 
-/* redis对象类型，共5种，字符串、列表、集合、有序集合和哈希字典，这5种都需要robj包装
+/* redis对象类型，共5种，字符串、列表、集合、有序集合和哈希字典，这5种都需要robj包装（type字段标识）
  * Object types */
 #define OBJ_STRING 0
 #define OBJ_LIST 1
@@ -196,11 +196,11 @@ typedef long long mstime_t; /* millisecond time type. */
 #define OBJ_ZSET 3
 #define OBJ_HASH 4
 
-/* redis对象编码类型，10种
+/* redis对象编码类型，10种，都需要robj包装(encoding字段标识）
  * Objects encoding. Some kind of objects like Strings and Hashes can be
  * internally represented in multiple ways. The 'encoding' field of the object
  * is set to one of this fields for this object. */
-#define OBJ_ENCODING_RAW 0     /* 原样编码存储 Raw representation */
+#define OBJ_ENCODING_RAW 0     /* sds编码存储（大串） Raw representation */
 #define OBJ_ENCODING_INT 1     /* 编码为整型 Encoded as integer */
 #define OBJ_ENCODING_HT 2      /* 编码为哈希表，即以哈希表存储 Encoded as hash table */
 #define OBJ_ENCODING_ZIPMAP 3  /* 以压缩字典存储 Encoded as zipmap */
@@ -208,8 +208,8 @@ typedef long long mstime_t; /* millisecond time type. */
 #define OBJ_ENCODING_ZIPLIST 5 /* 以压缩列表存储 Encoded as ziplist */
 #define OBJ_ENCODING_INTSET 6  /* 以整型集合存储 Encoded as intset */
 #define OBJ_ENCODING_SKIPLIST 7  /* 以跳跃表存储 Encoded as skiplist */
-#define OBJ_ENCODING_EMBSTR 8  /* Embedded sds string encoding */
-#define OBJ_ENCODING_QUICKLIST 9 /* Encoded as linked list of ziplists */
+#define OBJ_ENCODING_EMBSTR 8  /* 嵌入编码（小串）Embedded sds string encoding */
+#define OBJ_ENCODING_QUICKLIST 9 /* 快速链表编码 Encoded as linked list of ziplists */
 
 /* Defines related to the dump file format. To store 32 bits lengths for short
  * keys requires a lot of space, so we check the most significant 2 bits of
@@ -457,18 +457,18 @@ typedef long long mstime_t; /* millisecond time type. */
  * Data types
  *----------------------------------------------------------------------------*/
 
-/* redis对象，可用来存储string/list/set三种数据结构，比如存储字符串时，是（robj + sdshdr + string）三部分构成
+/* redis对象，redis支持的存储类型都需要robj包装，比如存储字符串时，是（robj + sdshdr + string）三部分构成
  * A redis object, that is a type able to hold a string / list / set */
 
-/* 实际的redis对象结构体，占用17个字节。The actual Redis Object */
+/* redis对象结构体，占用17个字节。The actual Redis Object */
 #define LRU_BITS 24
 #define LRU_CLOCK_MAX ((1<<LRU_BITS)-1) /* Max value of obj->lru */
 #define LRU_CLOCK_RESOLUTION 1000 /* LRU clock resolution in ms */
 typedef struct redisObject {
-    unsigned type:4;  // 4位
-    unsigned encoding:4;  // 4位
+    unsigned type:4;  // 4位 => 总共可以表示 2^4=16种，目前有5种，obj_string/obj_list/obj_set/obj_zset/obj_hash
+    unsigned encoding:4;  // 4位 => 总共可以表示 2^4=16种，目前有10种，OBJ_ENCODING_RAW/...
     unsigned lru:LRU_BITS; /* 24位 lru time (relative to server.lruclock) */
-    int refcount;  // 32位
+    int refcount;  // 32位，引用计数判断有多少在用
     void *ptr;  // 64位 指向值的指针
 } robj;  // 16个字节
 
@@ -512,7 +512,7 @@ struct evictionPoolEntry {
  * by integers from 0 (the default database) up to the max configured
  * database. The database number is the 'id' field in the structure. */
 typedef struct redisDb {
-    dict *dict;                 /* key存储的哈希字典，The keyspace for this DB */
+    dict *dict;                 /* 键空间，存储所有的key，The keyspace for this DB */
     dict *expires;              /* 设置了过期时间的所有key和过期时间，Timeout of keys with a timeout set */
     dict *blocking_keys;        /* 客户端阻塞等待的所有keys。Keys with clients waiting for data (BLPOP) */
     dict *ready_keys;           /* 客户端等待push推消息过来的所有keys，Blocked keys that received a PUSH */
@@ -1314,11 +1314,11 @@ typedef struct {
     int minex, maxex; /* 是否包含等号 are min or max exclusive? */
 } zrangespec;
 
-/* 设置有序集合执行zrange*时给定的词典顺序范围，在比较分值相同时就会使用此顺序比较
+/* 设置有序集合执行zrange*时给定的词典顺序范围的结构体，在比较分值相同时就会使用此顺序比较
  * Struct to hold an inclusive/exclusive range spec by lexicographic comparison. */
 typedef struct {
     robj *min, *max;  /* May be set to shared.(minstring|maxstring) */
-    int minex, maxex; /* 是否包含等号 are min or max exclusive? */
+    int minex, maxex; /* 是否不包含等号 are min or max exclusive? */
 } zlexrangespec;
 
 /* 有序集合操作函数 */
