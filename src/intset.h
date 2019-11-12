@@ -1,4 +1,7 @@
 /*
+ * 整数集合：集合底层实现之一，存储整型数据；实现较为简单
+ * 编码分三种：8（64位）、4（32位）、2（16位）
+ *
  * Copyright (c) 2009-2012, Pieter Noordhuis <pcnoordhuis at gmail dot com>
  * Copyright (c) 2009-2012, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
@@ -33,9 +36,9 @@
 #include <stdint.h>
 
 typedef struct intset {
-    uint32_t encoding;
-    uint32_t length;
-    int8_t contents[];
+    uint32_t encoding;  // 编码，3种编码之一
+    uint32_t length;  // 长度，初始为0
+    int8_t contents[];  // 集合内容，升序排列整型数组，可以升级到int16_t、int32_t、int64_t
 } intset;
 
 intset *intsetNew(void);
