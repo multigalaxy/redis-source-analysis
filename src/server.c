@@ -1879,7 +1879,7 @@ void resetServerStats(void) {
     server.aof_delayed_fsync = 0;
 }
 
-/* 初始化收尾工作，包括信号量、全局变量*/
+/* 服务器初始化，包括信号量、全局变量、创建全局公用robj对象、*/
 void initServer(void) {
     int j;
 
@@ -1936,7 +1936,8 @@ void initServer(void) {
         exit(1);
     }
 
-    /* Create the Redis databases, and initialize other internal state. */
+    /* 创建16个redis数据库，并初始化其内部状态
+     * Create the Redis databases, and initialize other internal state. */
     for (j = 0; j < server.dbnum; j++) {
         server.db[j].dict = dictCreate(&dbDictType,NULL);
         server.db[j].expires = dictCreate(&keyptrDictType,NULL);
@@ -1981,7 +1982,8 @@ void initServer(void) {
         exit(1);
     }
 
-    /* Create an event handler for accepting new connections in TCP and Unix
+    /* 创建接受连接的文件句柄，ip或socket连接，接受读请求
+     * Create an event handler for accepting new connections in TCP and Unix
      * domain sockets. */
     for (j = 0; j < server.ipfd_count; j++) {
         if (aeCreateFileEvent(server.el, server.ipfd[j], AE_READABLE,

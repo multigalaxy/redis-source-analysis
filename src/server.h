@@ -721,6 +721,7 @@ struct clusterState;
 #undef hz
 #endif
 
+/* 服务器通用全局配置 */
 struct redisServer {
     /* General */
     pid_t pid;                  /* Main process pid. */
