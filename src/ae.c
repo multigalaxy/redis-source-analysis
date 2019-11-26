@@ -209,7 +209,7 @@ static void aeAddMillisecondsToNow(long long milliseconds, long *sec, long *ms) 
     *ms = when_ms;
 }
 
-/* 生成时间事件，主要用于执行一些定时任务 */
+/* 创建时间事件，主要用于执行定时、周期性任务 */
 long long aeCreateTimeEvent(aeEventLoop *eventLoop, long long milliseconds,
         aeTimeProc *proc, void *clientData,
         aeEventFinalizerProc *finalizerProc)

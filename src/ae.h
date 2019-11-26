@@ -1,5 +1,6 @@
 /*
- * 一个简单事件驱动程序库
+ * 一个简单事件驱动程序
+ *
  * A simple event-driven programming library. Originally I wrote this code
  * for the Jim's event-loop (Jim is a Tcl interpreter) but later translated
  * it in form of a library for easy reuse.
@@ -40,15 +41,17 @@
 #define AE_OK 0
 #define AE_ERR -1
 
-#define AE_NONE 0       /* No events registered. */
-#define AE_READABLE 1   /* Fire when descriptor is readable. */
-#define AE_WRITABLE 2   /* Fire when descriptor is writable. */
+// redis标识事件可操作类型
+#define AE_NONE 0       /* 标识未注册事件类型 No events registered. */
+#define AE_READABLE 1   /* 标识可读事件 Fire when descriptor is readable. */
+#define AE_WRITABLE 2   /* 标识可写事件 Fire when descriptor is writable. */
 #define AE_BARRIER 4    /* With WRITABLE, never fire the event if the
                            READABLE event already fired in the same event
                            loop iteration. Useful when you want to persist
                            things to disk before sending replies, and want
                            to do that in a group fashion. */
 
+// redis支持的两类事件：文件事件即监听套接字等，时间事件即定时任务（包括定时清理垃圾这些）等
 #define AE_FILE_EVENTS 1
 #define AE_TIME_EVENTS 2
 #define AE_ALL_EVENTS (AE_FILE_EVENTS|AE_TIME_EVENTS)
@@ -62,27 +65,30 @@
 
 struct aeEventLoop;
 
-/* Types and data structures */
+/* 定义事件处理句柄（或叫处理器或叫回调函数）
+ * Types and data structures */
 typedef void aeFileProc(struct aeEventLoop *eventLoop, int fd, void *clientData, int mask);
-typedef int aeTimeProc(struct aeEventLoop *eventLoop, long long id, void *clientData);
-typedef void aeEventFinalizerProc(struct aeEventLoop *eventLoop, void *clientData);
-typedef void aeBeforeSleepProc(struct aeEventLoop *eventLoop);
+typedef int aeTimeProc(struct aeEventLoop *eventLoop, long long id, void *clientData);  // 如果返回值为正数，则是周期性事件，否则是一次性的
+typedef void aeEventFinalizerProc(struct aeEventLoop *eventLoop, void *clientData);  // 在删除时间事件时回调函数
+typedef void aeBeforeSleepProc(struct aeEventLoop *eventLoop);  // 在处理事件开始时的回调函数
 
-/* File event structure */
+/* 定义文件事件数据结构
+ * File event structure */
 typedef struct aeFileEvent {
-    int mask; /* one of AE_(READABLE|WRITABLE|BARRIER) */
-    aeFileProc *rfileProc;
-    aeFileProc *wfileProc;
-    void *clientData;
+    int mask; /* 标识该事件为可读或可写 - one of AE_(READABLE|WRITABLE|BARRIER) */
+    aeFileProc *rfileProc;  // 读事件处理句柄
+    aeFileProc *wfileProc;  // 写事件处理句柄
+    void *clientData;  // 接收客户端的数据
 } aeFileEvent;
 
-/* Time event structure */
+/* 定义时间事件数据结构
+ * Time event structure */
 typedef struct aeTimeEvent {
-    long long id; /* time event identifier. */
-    long when_sec; /* seconds */
-    long when_ms; /* milliseconds */
-    aeTimeProc *timeProc;
-    aeEventFinalizerProc *finalizerProc;
+    long long id; /* 时间唯一标识，递增 - time event identifier. */
+    long when_sec; /* 定时几秒后触发 - seconds */
+    long when_ms; /* 定时几毫秒后触发 - milliseconds */
+    aeTimeProc *timeProc;  // 时间事件处理句柄
+    aeEventFinalizerProc *finalizerProc;  // 删除定时器事件时执行的句柄
     void *clientData;
     struct aeTimeEvent *next;
 } aeTimeEvent;
@@ -107,7 +113,8 @@ typedef struct aeEventLoop {
     aeBeforeSleepProc *beforesleep;
 } aeEventLoop;
 
-/* Prototypes */
+/* 定义事件api
+ * Prototypes */
 aeEventLoop *aeCreateEventLoop(int setsize);
 void aeDeleteEventLoop(aeEventLoop *eventLoop);
 void aeStop(aeEventLoop *eventLoop);
