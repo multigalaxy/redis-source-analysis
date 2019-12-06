@@ -41,7 +41,12 @@
 #define AE_OK 0
 #define AE_ERR -1
 
-// redis标识事件可操作类型
+// redis标识事件类型，是服务器针对客户端的事件
+// 可读事件：
+// 服务端的监听套接字接受连接时，将在监听套接字绑定可读事件，执行连接应答处理器
+// 服务端接收客户端发来的命令请求，将在连接套接字绑定可读事件，执行命令请求处理器
+// 可写事件：
+// 服务端向客户端发送命令回复时，将在连接套接字绑定可写事件，执行命令回复处理器
 #define AE_NONE 0       /* 标识未注册事件类型 No events registered. */
 #define AE_READABLE 1   /* 标识可读事件 Fire when descriptor is readable. */
 #define AE_WRITABLE 2   /* 标识可写事件 Fire when descriptor is writable. */

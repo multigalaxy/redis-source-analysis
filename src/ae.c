@@ -487,6 +487,7 @@ int aeWait(int fd, int mask, long long milliseconds) {
     }
 }
 
+// 启动事件轮询
 void aeMain(aeEventLoop *eventLoop) {
     eventLoop->stop = 0;
     while (!eventLoop->stop) {

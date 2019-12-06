@@ -1910,7 +1910,7 @@ void initServer(void) {
 
     createSharedObjects();
     adjustOpenFilesLimit();
-    server.el = aeCreateEventLoop(server.maxclients+CONFIG_FDSET_INCR);
+    server.el = aeCreateEventLoop(server.maxclients+CONFIG_FDSET_INCR);  // 用最大连接数加上最小的文件描述符数量作为事件描述符数量，创建服务端事件轮询模型
     server.db = zmalloc(sizeof(redisDb)*server.dbnum);
 
     /* Open the TCP listening socket for the user commands. */
