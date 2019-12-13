@@ -365,9 +365,9 @@ typedef long long mstime_t; /* millisecond time type. */
 #define AOF_FSYNC_EVERYSEC 2
 #define CONFIG_DEFAULT_AOF_FSYNC AOF_FSYNC_EVERYSEC
 
-/* Zip structure related defaults */
-#define OBJ_HASH_MAX_ZIPLIST_ENTRIES 512
-#define OBJ_HASH_MAX_ZIPLIST_VALUE 64
+/* 定义几个压缩列表相关的默认值 Zip structure related defaults */
+#define OBJ_HASH_MAX_ZIPLIST_ENTRIES 512  // 哈希表使用压缩列表时支持的最大结点个数
+#define OBJ_HASH_MAX_ZIPLIST_VALUE 64  // 哈希表使用压缩列表时支持的value长度
 #define OBJ_SET_MAX_INTSET_ENTRIES 512
 #define OBJ_ZSET_MAX_ZIPLIST_ENTRIES 128
 #define OBJ_ZSET_MAX_ZIPLIST_VALUE 64
@@ -460,14 +460,14 @@ typedef long long mstime_t; /* millisecond time type. */
 /* redis对象，redis支持的存储类型都需要robj包装，比如存储字符串时，是（robj + sdshdr + string）三部分构成
  * A redis object, that is a type able to hold a string / list / set */
 
-/* redis对象结构体，占用17个字节。The actual Redis Object */
+/* 定义redis对象结构体，占用17个字节。The actual Redis Object */
 #define LRU_BITS 24
 #define LRU_CLOCK_MAX ((1<<LRU_BITS)-1) /* Max value of obj->lru */
 #define LRU_CLOCK_RESOLUTION 1000 /* LRU clock resolution in ms */
 typedef struct redisObject {
     unsigned type:4;  // 4位 => 总共可以表示 2^4=16种，目前有5种，obj_string/obj_list/obj_set/obj_zset/obj_hash
     unsigned encoding:4;  // 4位 => 总共可以表示 2^4=16种，目前有10种，OBJ_ENCODING_RAW/...
-    unsigned lru:LRU_BITS; /* 24位 lru time (relative to server.lruclock) */
+    unsigned lru:LRU_BITS; /* 只取后24位 lru time (relative to server.lruclock) */
     int refcount;  // 32位，引用计数判断有多少在用
     void *ptr;  // 64位 指向值的指针
 } robj;  // 16个字节
@@ -721,16 +721,16 @@ struct clusterState;
 #undef hz
 #endif
 
-/* 服务器通用全局配置 */
+/* 定义服务器通用全局参数配置 */
 struct redisServer {
     /* General */
     pid_t pid;                  /* Main process pid. */
-    char *configfile;           /* Absolute config file path, or NULL */
+    char *configfile;           /* 如果指定了配置文件，此值保存绝对路径 Absolute config file path, or NULL */
     char *executable;           /* Absolute executable file path. */
     char **exec_argv;           /* Executable argv vector (copy). */
     int hz;                     /* serverCron() calls frequency in hertz */
     redisDb *db;
-    dict *commands;             /* 服务器支持的命令表 Command table */
+    dict *commands;             /* 可以支持的所有命令 Command table */
     dict *orig_commands;        /* 服务器支持的原始命令表，防止redis.conf修改命令，可以跟*commands中的做映射 Command table before command renaming. */
     aeEventLoop *el;
     unsigned lruclock:LRU_BITS; /* Clock for LRU eviction */
@@ -1425,8 +1425,8 @@ void notifyKeyspaceEvent(int type, char *event, robj *key, int dbid);
 int keyspaceEventsStringToFlags(char *classes);
 sds keyspaceEventsFlagsToString(int flags);
 
-/* Configuration */
-void loadServerConfig(char *filename, char *options);
+/* 定义服务器全局配置参数相关的函数 Configuration */
+void loadServerConfig(char *filename, char *options);  // 先加载配置文件
 void appendServerSaveParams(time_t seconds, int changes);
 void resetServerSaveParams(void);
 struct rewriteConfigState; /* Forward declaration to export API. */

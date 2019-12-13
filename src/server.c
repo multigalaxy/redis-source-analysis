@@ -1464,7 +1464,7 @@ void createSharedObjects(void) {
     shared.maxstring = createStringObject("maxstring",9);
 }
 
-/* 初始化服务器参数配置 */
+/* 初始化服务器全局参数配置项 */
 void initServerConfig(void) {
     int j;
 

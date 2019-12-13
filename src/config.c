@@ -1759,7 +1759,9 @@ cleanup:
     return retval;
 }
 
-/* Rewrite the configuration file at "path".
+/*
+ * 使用指定配置文件的重新赋值的配置项覆盖服务器里（server)定义的默认值
+ * Rewrite the configuration file at "path".
  * If the configuration file already exists, we try at best to retain comments
  * and overall structure.
  *
@@ -1872,7 +1874,7 @@ int rewriteConfig(char *path) {
 }
 
 /*-----------------------------------------------------------------------------
- * CONFIG command entry point
+ * 全局配置参数命令，比如rewrite可以使用指定的配置项覆盖当前服务器已有的全局参数 CONFIG command entry point
  *----------------------------------------------------------------------------*/
 
 void configCommand(client *c) {
